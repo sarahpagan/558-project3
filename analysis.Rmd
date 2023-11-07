@@ -113,7 +113,7 @@ past 30 days ")
 
 ```{r}
 edu_data |>
-  filter(Diabetes == "Diabetes or Prediabetes") |>
+  filter(Diabetes == "Diabetes_or_Prediabetes") |>
   group_by(Age) |>
   summarise(n = n())
 ```
@@ -139,8 +139,18 @@ Log loss is the preferred evaluation metric over accuracy for classification mod
 
 ## Logistic Regression
 
+Logistic regression models are classification models estimating the probability of an event occurring given a set of predictors. The logistic regression function models an outcome as the log-odds of success:
+
+$log(\frac{P(success|x)}{1-P(sucess|x)}) = \beta_0 + \beta_1x_1$
+
+Therefore, the $\beta_1$ coefficient should be interpreted as the change in log-odds given a one-unit  change in x. After taking the exponent of both sides in the above equation, it follows that:
+
+$P(success|x) = \frac{e^{\beta_0 + \beta_1x_1}}{1 + e^{\beta_0 + \beta_1x_1}}$
+
+We use `method = "glm"` and `family = "binomial"` to train three candidate logistic regression models for predicting diabetes outcome.
+
 ```{r}
-logfit <- train(Diabetes ~ Age + HighChol + HighBP,
+logfit <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
                  data = train_data,
                  method = "glm",
                  family = "binomial",
@@ -164,7 +174,7 @@ logfit2 <- train(Diabetes ~ Sex + GenHlth + PhysHlth + MentHlth,
 ```
 
 ```{r}
-logfit3 <- train(Diabetes ~ Veggies + Fruits + HvyAlcoholConsump + Smoker,
+logfit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump,
                  data = train_data,
                  method = "glm",
                  family = "binomial",
@@ -176,10 +186,12 @@ logfit3 <- train(Diabetes ~ Veggies + Fruits + HvyAlcoholConsump + Smoker,
 ```
 
 ```{r}
-log_results <- data_frame("Metric" = "logLoss",
-                          "Model 1" = logfit$results$logLoss,
-                          "Model 2" = logfit2$results$logLoss,
-                          "Model 3" = logfit3$results$logLoss)
+log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
+                                  "Sex + GenHlth + PhysHlth + MentHlth",
+                                  "Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump"),
+                      "logLoss" = c(logfit$results$logLoss,
+                                    logfit2$results$logLoss,
+                                    logfit3$results$logLoss))
 log_results
 ```
 
