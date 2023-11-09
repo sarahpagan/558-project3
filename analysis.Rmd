@@ -254,6 +254,69 @@ log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
 log_results
 ```
 
+## LASSO
+
+<<TO DO>>
+
+We use `method = "glmnet"` and `family="binomial"` as well as specifying tuning parameter `alpha=1` to employ LASSO methods in classification models.
+
+```{r}
+lassofit <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
+                  data = train_data,
+                  method = "glmnet",
+                  family = "binomial",
+                  trControl = trainControl(method = "cv",
+                                         number = 5,
+                                         classProbs = TRUE,
+                                         summaryFunction=mnLogLoss),
+                  tuneGrid = expand.grid(alpha=1,
+                                          lambda=seq(0, 100, by = 0.1)),
+                  metric = "logLoss")
+
+lassofit2 <- train(Diabetes ~ Sex + GenHlth + PhysHlth + MentHlth,
+                  data = train_data,
+                  method = "glmnet",
+                  family = "binomial",
+                  trControl = trainControl(method = "cv",
+                                         number = 5,
+                                         classProbs = TRUE,
+                                         summaryFunction=mnLogLoss),
+                  tuneGrid = expand.grid(alpha=1,
+                                          lambda=seq(0, 100, by = 0.1)),
+                  metric = "logLoss")
+
+lassofit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump,
+                  data = train_data,
+                  method = "glmnet",
+                  family = "binomial",
+                  trControl = trainControl(method = "cv",
+                                         number = 5,
+                                         classProbs = TRUE,
+                                         summaryFunction=mnLogLoss),
+                  tuneGrid = expand.grid(alpha=1,
+                                          lambda=seq(0, 100, by = 0.1)),
+                  metric = "logLoss")
+```
+
+Log loss for all three models, as well as tuning parameters of the final models:
+
+```{r}
+lasso_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
+                                  "Sex + GenHlth + PhysHlth + MentHlth",
+                                  "Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump"),
+                      "alpha" = c(lassofit$bestTune$alpha,
+                                  lassofit2$bestTune$alpha,
+                                  lassofit3$bestTune$alpha),
+                      "lambda" = c(lassofit$bestTune$lambda,
+                                   lassofit2$bestTune$lambda,
+                                   lassofit3$bestTune$lambda),
+                      "logLoss" = c(min(lassofit$results$logLoss),
+                                    min(lassofit2$results$logLoss),
+                                    min(lassofit3$results$logLoss)))
+lasso_results
+
+```
+
 ## Random Forest
 
 Random forests are an extension to ensemble learning methods for decision tree analysis. Unlike decision trees, however, random forests only consider a subset of total predictors, $m < p$. Random forest algorithms follow the same process as bagging, with this key difference. The steps to building a random forest are:
