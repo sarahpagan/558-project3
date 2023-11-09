@@ -8,6 +8,6 @@ reports <- diabetes |>
                          FUN = function(x){list(edu_level = x)})) |>
   select(-Education)
 
-pwalk(reports, render, input = "test.md")
+pwalk(reports, render, input = "analysis.Rmd")
 
 
