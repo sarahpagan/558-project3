@@ -142,6 +142,7 @@ ggplot(data = edu_data, aes(x = MentHlth)) +
        subtitle = paste0("Education Level: ", params$edu_level)) +
   xlab("Reported Number of days of Poor Mental Health in last 30")
 ```
+
 ```{r}
 ggplot(data = edu_data, aes(x = PhysHlth)) + 
   geom_histogram(bins = 5, aes(fill = Diabetes)) + 
@@ -150,6 +151,7 @@ ggplot(data = edu_data, aes(x = PhysHlth)) +
        subtitle = paste0("Education Level: ", params$edu_level)) +
   xlab("Reported Number of days of Poor Physical Health in last 30")
 ```
+
 ```{r}
 ggplot(edu_data, aes(y = GenHlth)) + 
   geom_bar(aes(fill = Diabetes), position = "fill") + 
@@ -158,12 +160,14 @@ ggplot(edu_data, aes(y = GenHlth)) +
        subtitle = paste0("Education Level: ", params$edu_level)) +
   xlab("Proportion") + ylab("General Health")
 ```
+
 ```{r}
 edu_data %>% 
   group_by(Smoker, HvyAlcoholConsump, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
+
 ```{r}
 edu_data %>% 
   group_by(AnyHealthcare, NoDocbcCost, Diabetes) %>% 
@@ -190,13 +194,15 @@ Where $y_i$ is the true outcome and $p(y_i)$ is the predicted probability of $y_
 
 Log loss is the preferred evaluation metric over accuracy for classification modeling because it is more sensitive to the quality of predictions, beyond whether the prediction was correct or incorrect. High probability, incorrect predictions will be more heavily penalized using a log loss metric. The goal is to develop a model with more accurate, calibrated predictions.
 
+For all methods of model building, we use the log loss metric to identify a "best" model.
+
 ## Logistic Regression
 
-Logistic regression models are classification models estimating the probability of an event occurring given a set of predictors. The logistic regression function models an outcome as the log-odds of success:
+Logistic regression models are classification models estimating the probability of a binary event occurring given a set of predictors. The logistic regression function models an outcome as the log-odds of success:
 
 $log(\frac{P(success|x)}{1-P(sucess|x)}) = \beta_0 + \beta_1x_1$
 
-Therefore, the $\beta_1$ coefficient should be interpreted as the change in log-odds given a one-unit  change in x. After taking the exponent of both sides in the above equation, it follows that:
+Therefore, the $\beta_1$ coefficient should be interpreted as the change in log-odds given a one-unit change in x. Taking the exponent of both sides in the above equation, it follows that:
 
 $P(success|x) = \frac{e^{\beta_0 + \beta_1x_1}}{1 + e^{\beta_0 + \beta_1x_1}}$
 
@@ -212,9 +218,7 @@ logfit <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
                                          classProbs = TRUE,
                                          summaryFunction=mnLogLoss),
                  metric = "logLoss") 
-```
 
-```{r}
 logfit2 <- train(Diabetes ~ Sex + GenHlth + PhysHlth + MentHlth,
                  data = train_data,
                  method = "glm",
@@ -224,9 +228,7 @@ logfit2 <- train(Diabetes ~ Sex + GenHlth + PhysHlth + MentHlth,
                                          classProbs = TRUE,
                                          summaryFunction=mnLogLoss),
                  metric = "logLoss")
-```
 
-```{r}
 logfit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump,
                  data = train_data,
                  method = "glm",
@@ -237,6 +239,8 @@ logfit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholCons
                                          summaryFunction=mnLogLoss),
                  metric = "logLoss")
 ```
+
+The logLoss for all three models is summarized in the following table:
 
 ```{r}
 log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
@@ -250,6 +254,16 @@ log_results
 
 ## Random Forest
 
+Random forests are an extension to ensemble learning methods for decision tree analysis. Unlike decision trees, however, random forests only consider a subset of total predictors, $m < p$. Random forest algorithms follow the same process as bagging, with this key difference. The steps to building a random forest are:
+
+1.  Draw a bootstrap sample from the training data of sample size = $n$.
+2.  Randomly select a subset of predictors = $m$ and train a tree.
+3.  Call predictions for OOB observations.
+4.  Repeat a large number = $B$ times.
+5.  Average predictions (take majority vote) for each observation $i$ and calculate error.
+
+We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of $m$ from 1 to 21 $(p)$.
+
 ```{r}
 rffit <- train(Diabetes ~ .,
                data = train_data,
@@ -262,4 +276,3 @@ rffit <- train(Diabetes ~ .,
                metric = "logLoss")
 rffit
 ```
-
