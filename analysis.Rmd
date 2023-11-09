@@ -13,6 +13,7 @@ library(dplyr)
 library(forcats)
 library(ggplot2)
 library(caret)
+library(tidyr)
 ```
 
 # Read in Data
@@ -116,6 +117,58 @@ edu_data |>
   filter(Diabetes == "Diabetes_or_Prediabetes") |>
   group_by(Age) |>
   summarise(n = n())
+```
+```{r}
+ggplot(edu_data, aes(y = Income)) + 
+  geom_bar(aes(fill = Diabetes), position = "fill") + 
+  scale_fill_manual(values = c("#FF5070", "#9070FF")) +
+  labs(title = "Occurence of Diabetes by Income", 
+       subtitle = paste0("Education Level: ", params$edu_level)) +
+  xlab("Proportion")
+```
+
+```{r}
+edu_data %>% 
+  group_by(Fruits, Veggies, Diabetes) %>% 
+  summarise(n = n()) %>% 
+  pivot_wider(names_from = Diabetes, values_from = n)
+```
+
+```{r}
+ggplot(data = edu_data, aes(x = MentHlth)) + 
+  geom_histogram(bins = 5, aes(fill = Diabetes)) + 
+  scale_fill_manual(values = c("#FF5070", "#9070FF")) +
+   labs(title = "Occurence of Diabetes by Mental Health", 
+       subtitle = paste0("Education Level: ", params$edu_level)) +
+  xlab("Reported Number of days of Poor Mental Health in last 30")
+```
+```{r}
+ggplot(data = edu_data, aes(x = PhysHlth)) + 
+  geom_histogram(bins = 5, aes(fill = Diabetes)) + 
+  scale_fill_manual(values = c("#FF5070", "#9070FF")) +
+   labs(title = "Occurence of Diabetes by Physical Health", 
+       subtitle = paste0("Education Level: ", params$edu_level)) +
+  xlab("Reported Number of days of Poor Physical Health in last 30")
+```
+```{r}
+ggplot(edu_data, aes(y = GenHlth)) + 
+  geom_bar(aes(fill = Diabetes), position = "fill") + 
+  scale_fill_manual(values = c("#FF5070", "#9070FF")) +
+  labs(title = "Occurence of Diabetes by General Health", 
+       subtitle = paste0("Education Level: ", params$edu_level)) +
+  xlab("Proportion") + ylab("General Health")
+```
+```{r}
+edu_data %>% 
+  group_by(Smoker, HvyAlcoholConsump, Diabetes) %>% 
+  summarise(n = n()) %>% 
+  pivot_wider(names_from = Diabetes, values_from = n)
+```
+```{r}
+edu_data %>% 
+  group_by(AnyHealthcare, NoDocbcCost, Diabetes) %>% 
+  summarise(n = n()) %>% 
+  pivot_wider(names_from = Diabetes, values_from = n)
 ```
 
 # Modeling
