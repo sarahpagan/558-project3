@@ -1,8 +1,10 @@
 ---
 title: "analysis"
-output: github_document
+output: 
+  github_document: 
+      html_preview: false
 params:
-  edu_level: "No School/Elementary"
+  edu_level: "No School or Elementary"
 ---
 
 ```{r setup, include=FALSE}
@@ -52,8 +54,8 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
                           "75 to 79" = "12",
                           "80 or Older" = "13")) |>
   mutate(Education = fct_recode(Education, 
-                                "No School/Elementary" = "1",
-                                "No School/Elementary" = "2",
+                                "No School or Elementary" = "1",
+                                "No School or Elementary" = "2",
                                 "Some High School" = "3",
                                 "High School Graduate" = "4",
                                 "Some College or Technical School" = "5",
@@ -269,10 +271,12 @@ rffit <- train(Diabetes ~ .,
                data = train_data,
                method = "rf",
                trControl = trainControl(method = "cv",
-                                         number = 5,
-                                         classProbs = TRUE,
-                                         summaryFunction=mnLogLoss),
+                                        number = 5,
+                                        classProbs = TRUE,
+                                        summaryFunction=mnLogLoss),
                tuneGrid = data.frame(mtry = 1:21),
                metric = "logLoss")
 rffit
 ```
+
+
