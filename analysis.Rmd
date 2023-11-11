@@ -18,6 +18,28 @@ library(caret)
 library(tidyr)
 ```
 
+# Introduction
+
+We are provided data from the Behavioral Risk Factor Surveillance System (BRFSS) from 2015. While the original data contains 330 columns, only columns relevant to diabetes research (22 columns) have been pulled. This includes data on:
+
+* Presence of High Blood Pressure
+* Presence of High Cholesterol, and whether it has been checked in the last 5 years
+* Body Mass Index
+* Whether the subject is a smoker
+* If the subject has had a stroke or has history of heart disease
+* Whether the subject is physically active
+* If the subjects' diet consists of regular fruits and vegetables
+* Whether the subject is a heavy drinker
+* Variables concerning health care coverage and access to doctors
+* Variables concerning general physical and mental health
+* General Data, such as Sex, Age, Education level and Income
+
+Prior to fitting models to predict the presence of diabetes, the data must be read in, processed, and exploratory data analysis (EDA) should be run..
+
+Processing involves resolving missing data and recoding certain variables into more easily used forms. EDA involves summarizing and visualizing data in order to identify trends and associations.
+
+The end goal is to partition the data into training and testing datasets, and examine various methods of building classification models to determine which results in a model with highest efficacy.
+
 # Read in Data
 
 ```{r}
@@ -346,4 +368,29 @@ rffit <- train(Diabetes ~ .,
 rffit
 ```
 
+## K-Nearest Neighbors
+
+K-Nearest Neighbors (KNN) is a classification model that considers the value of the surrounding points to predict the value of a target point. New entries are classified by looking at the value of the closest entries, and assigning the prevailing classification. The number of closest entries referenced is determined by the `k` parameter. Various formulas for distance can be used, depending on the type of data, but generally Euclidean distance is used for numeric data, and Hamming distance for categorical data.
+
+We use `method = "knn"` to train k-nearest neighbors models.
+
+```{r}
+knnfit <- train(Diabetes ~ .,
+                  data = train_data,
+                  method = "knn",
+                  trControl = trainControl(method = "cv",
+                                         number = 5,
+                                         classProbs = TRUE,
+                                         summaryFunction=mnLogLoss),
+                  metric = "logLoss")
+```
+
+Candidate models are proposed, with their respective tuning parameters and log Loss.
+
+```{r}
+knn_results <- tibble("Candidate Model" = seq(1, 3),
+                      "k" = knnfit$results$k,
+                      "logLoss" = knnfit$results$logLoss)
+knn_results
+```
 
