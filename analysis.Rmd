@@ -254,41 +254,28 @@ log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
 log_results
 ```
 
-## LASSO
+## LASSO Logistic Regression
 
-<<TO DO>>
+LASSO, or the Least Absolute Shrinkage and Selection Operator, is a method of maximum likelihood regression that introduces a penalty to the regression coefficients that is controlled by the parameter `lambda(`$\lambda$`)`. At $\lamda=0$, there is no penalty, and as the value of $\lambda$ increases, the penalty increases. This has the effect of shrinking the regression variables towards 0.
 
-We use `method = "glmnet"` and `family="binomial"` as well as specifying tuning parameter `alpha=1` to employ LASSO methods in classification models.
+Both LASSO and ridge models employ this penalty, but one of the key differences between the two regression methods is that LASSO models can return coefficients of 0. As a result, LASSO is both a means of modeling as well as variable selection.
 
-```{r}
-lassofit <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
+The general equation used for LASSO, ridge, and other elastic net regression models is
+
+$\min\limits_{\beta_0, \beta} \frac{1}{N} w_i l(y_i , \beta_0 + \beta^T x_i ) +\lambda[(1-\alpha)\|\beta\|^2_2 /2+\alpha\|\beta\|_1]$
+
+for the provided values of $\alpha$ and $\lambda$.
+
+Source: https://glmnet.stanford.edu/articles/glmnet.html
+
+We use `method = "glmnet"` and `family="binomial"` as well as specifying tuning parameter `alpha=1` to employ LASSO methods in classification models. Because of the model's sensitivity to the scale of the parameters, the data is centered and standardized prior to model building.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+lassofit <- train(Diabetes ~ .,
                   data = train_data,
                   method = "glmnet",
                   family = "binomial",
-                  trControl = trainControl(method = "cv",
-                                         number = 5,
-                                         classProbs = TRUE,
-                                         summaryFunction=mnLogLoss),
-                  tuneGrid = expand.grid(alpha=1,
-                                          lambda=seq(0, 100, by = 0.1)),
-                  metric = "logLoss")
-
-lassofit2 <- train(Diabetes ~ Sex + GenHlth + PhysHlth + MentHlth,
-                  data = train_data,
-                  method = "glmnet",
-                  family = "binomial",
-                  trControl = trainControl(method = "cv",
-                                         number = 5,
-                                         classProbs = TRUE,
-                                         summaryFunction=mnLogLoss),
-                  tuneGrid = expand.grid(alpha=1,
-                                          lambda=seq(0, 100, by = 0.1)),
-                  metric = "logLoss")
-
-lassofit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump,
-                  data = train_data,
-                  method = "glmnet",
-                  family = "binomial",
+                  preProcess = c("center", "scale"),
                   trControl = trainControl(method = "cv",
                                          number = 5,
                                          classProbs = TRUE,
@@ -298,23 +285,40 @@ lassofit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholCo
                   metric = "logLoss")
 ```
 
-Log loss for all three models, as well as tuning parameters of the final models:
+Log loss for three best-performing candidate models, as well as tuning parameters of the models:
 
 ```{r}
-lasso_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
-                                  "Sex + GenHlth + PhysHlth + MentHlth",
-                                  "Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump"),
-                      "alpha" = c(lassofit$bestTune$alpha,
-                                  lassofit2$bestTune$alpha,
-                                  lassofit3$bestTune$alpha),
-                      "lambda" = c(lassofit$bestTune$lambda,
-                                   lassofit2$bestTune$lambda,
-                                   lassofit3$bestTune$lambda),
-                      "logLoss" = c(min(lassofit$results$logLoss),
-                                    min(lassofit2$results$logLoss),
-                                    min(lassofit3$results$logLoss)))
+lasso_results <- tibble("Candidate Model" = seq(1, 3),
+                        "alpha" = lassofit$results %>% arrange(logLoss) %>% pull(alpha) %>% head(3),
+                        "lambda" = lassofit$results %>% arrange(logLoss) %>% pull(lambda) %>% head(3),
+                        "logLoss" = lassofit$results %>% arrange(logLoss) %>% pull(logLoss) %>% head(3))
 lasso_results
+```
 
+## Classification Trees
+
+Classification trees are classification models that attempt to predict the outcome by splitting the data into groups depending on the values of certain variables. Generally, this process would continue until any additional splits would add nothing to the model, but the number of splits can also be controlled using the complexity parameter `cp`.
+
+We use `method = "rpart"` to build classification trees.
+
+```{r}
+treefit <- train(Diabetes ~ .,
+                  data = train_data,
+                  method = "rpart",
+                  trControl = trainControl(method = "cv",
+                                         number = 5,
+                                         classProbs = TRUE,
+                                         summaryFunction=mnLogLoss),
+                  metric = "logLoss")
+```
+
+Summary of all candidate models, with tuning parameters and log loss:
+
+```{r}
+tree_results <- tibble("Candidate Model" = seq(1, 3),
+                      "cp" = treefit$results$cp,
+                      "logLoss" = treefit$results$logLoss)
+tree_results
 ```
 
 ## Random Forest
