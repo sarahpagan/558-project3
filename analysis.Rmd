@@ -16,6 +16,7 @@ library(forcats)
 library(ggplot2)
 library(caret)
 library(tidyr)
+library(rfUtilities)
 ```
 
 # Read in Data
@@ -211,7 +212,7 @@ $P(success|x) = \frac{e^{\beta_0 + \beta_1x_1}}{1 + e^{\beta_0 + \beta_1x_1}}$
 We use `method = "glm"` and `family = "binomial"` to train three candidate logistic regression models for predicting diabetes outcome.
 
 ```{r}
-logfit <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
+logfit1 <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
                  data = train_data,
                  method = "glm",
                  family = "binomial",
@@ -248,11 +249,29 @@ The logLoss for all three models is summarized in the following table:
 log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
                                   "Sex + GenHlth + PhysHlth + MentHlth",
                                   "Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump"),
-                      "logLoss" = c(logfit$results$logLoss,
+                      "logLoss" = c(logfit1$results$logLoss,
                                     logfit2$results$logLoss,
                                     logfit3$results$logLoss))
 log_results
 ```
+
+```{r}
+min <- which.min(log_results$logLoss)
+
+if(min==1){
+  logfit <- logfit1
+  print("The best model is logfit1")
+  }else{
+    if(min ==2){
+      logfit <- logfit2
+      print("The best model is logfit2")
+    }else{
+      logfit <- logfit3
+      print("The best model is logfit3")
+    }
+  }
+```
+
 
 ## LASSO Logistic Regression
 
@@ -331,7 +350,7 @@ Random forests are an extension to ensemble learning methods for decision tree a
 4.  Repeat a large number = $B$ times.
 5.  Average predictions (take majority vote) for each observation $i$ and calculate error.
 
-We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of $m$ from 1 to 21 $(p)$.
+We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of $m$ from 1 to 5  $(\sqrt{21} = 4.58)$.
 
 ```{r}
 rffit <- train(Diabetes ~ .,
@@ -341,9 +360,32 @@ rffit <- train(Diabetes ~ .,
                                         number = 5,
                                         classProbs = TRUE,
                                         summaryFunction=mnLogLoss),
-               tuneGrid = data.frame(mtry = 1:21),
+               tuneGrid = data.frame(mtry = 1:5),
                metric = "logLoss")
 rffit
 ```
 
+## Final Model Selection
+
+```{r}
+obs <- test_data |>
+  mutate(Diabetes = fct_recode(Diabetes, 
+                               "0" = "No_Diabetes",
+                               "1" = "Diabetes_or_Prediabetes")) |>
+  select(Diabetes)
+
+logpreds <- predict(logfit, newdata = test_data)
+logprobs <- predict(logfit, newdata = test_data, type="prob")
+
+rfpreds <- predict(rffit, newdata = test_data)
+rfprobs <- predict(rffit, newdata = test_data, type = "prob")
+
+tibble("Model Type" = c("Logistic Regression",
+                        "Random Forest"),
+       "Accuracy" = c(postResample(logpreds, test_data$Diabetes)[1],
+                      postResample(rfpreds, test_data$Diabetes)[1]),
+       "logLoss" = c(logLoss(y = as.numeric(as.character(obs$Diabetes)), p = logprobs[,2])[1],
+                     logLoss(y = as.numeric(as.character(obs$Diabetes)), p = rfprobs[,2])[1])
+)
+```
 
