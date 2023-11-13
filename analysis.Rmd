@@ -3,6 +3,8 @@ title: "analysis"
 output: 
   github_document: 
       html_preview: false
+      toc: TRUE
+      toc_depth: 2
 params:
   edu_level: "No School or Elementary"
 ---
@@ -23,25 +25,29 @@ library(rfUtilities)
 
 We are provided data from the Behavioral Risk Factor Surveillance System (BRFSS) from 2015. While the original data contains 330 columns, only columns relevant to diabetes research (22 columns) have been pulled. This includes data on:
 
-* Presence of High Blood Pressure
-* Presence of High Cholesterol, and whether it has been checked in the last 5 years
-* Body Mass Index
-* Whether the subject is a smoker
-* If the subject has had a stroke or has history of heart disease
-* Whether the subject is physically active
-* If the subjects' diet consists of regular fruits and vegetables
-* Whether the subject is a heavy drinker
-* Variables concerning health care coverage and access to doctors
-* Variables concerning general physical and mental health
-* General Data, such as Sex, Age, Education level and Income
+-   Presence of High Blood Pressure
+-   Presence of High Cholesterol, and whether it has been checked in the last 5 years
+-   Body Mass Index
+-   Whether the subject is a smoker
+-   If the subject has had a stroke or has history of heart disease
+-   Whether the subject is physically active
+-   If the subjects' diet consists of regular fruits and vegetables
+-   Whether the subject is a heavy drinker
+-   Variables concerning health care coverage and access to doctors
+-   Variables concerning general physical and mental health
+-   General Data, such as Sex, Age, Education level and Income
 
-Prior to fitting models to predict the presence of diabetes, the data must be read in, processed, and exploratory data analysis (EDA) should be run..
+Our task is to perform separate analyses for each level of `Education` in the data set. This document contains analysis for the `r params$edu_level` group.
+
+Prior to fitting models to predict the presence of diabetes, the data must be read in, processed, and exploratory data analysis (EDA) should be performed.
 
 Processing involves resolving missing data and recoding certain variables into more easily used forms. EDA involves summarizing and visualizing data in order to identify trends and associations.
 
 The end goal is to partition the data into training and testing datasets, and examine various methods of building classification models to determine which results in a model with highest efficacy.
 
 # Read in Data
+
+We first read in the data and convert many of the variables to factors. We then add meaningful level names to each categorical predictor.
 
 ```{r}
 diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
@@ -59,7 +65,7 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
   mutate(HvyAlcoholConsump = fct_recode(HvyAlcoholConsump, "No" = "0", "Yes" = "1")) |>
   mutate(AnyHealthcare = fct_recode(AnyHealthcare, "No" = "0", "Yes" = "1")) |>
   mutate(NoDocbcCost = fct_recode(NoDocbcCost, "No" = "0", "Yes" = "1")) |>
-  mutate(GenHlth = fct_recode(GenHlth, "Excellent" = "1", "Very_Good" = "2", "Good" = "3", "Fair" = "4", "Poor" = "5")) |>
+  mutate(GenHlth = fct_recode(GenHlth, "Excellent" = "1", "Very Good" = "2", "Good" = "3", "Fair" = "4", "Poor" = "5")) |>
   mutate(DiffWalk = fct_recode(DiffWalk, "No" = "0", "Yes" = "1")) |>
   mutate(Sex = fct_recode(Sex, "Female" = "0", "Male" = "1")) |>
   mutate(Age = fct_recode(Age,
@@ -94,6 +100,8 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
                           "$75,000 or more" = "8")) |>
   select(Diabetes, everything())
 ```
+
+Next, we filter the data for the education level: `r params$edu_level`. Here's the final data frame.
 
 ```{r}
 edu_data <- filter(diabetes, Education == params$edu_level)
@@ -143,6 +151,7 @@ edu_data |>
   group_by(Age) |>
   summarise(n = n())
 ```
+
 ```{r}
 ggplot(edu_data, aes(y = Income)) + 
   geom_bar(aes(fill = Diabetes), position = "fill") + 
@@ -201,6 +210,8 @@ edu_data %>%
 ```
 
 # Modeling
+
+Before we start modeling the data, we split the data into a training and test set. We use `createDataPartition` to do so, using 70% of the data for training while reserving 30% of the data for testing.
 
 ```{r}
 set.seed(10)
@@ -265,7 +276,7 @@ logfit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholCons
                  metric = "logLoss")
 ```
 
-The logLoss for all three models is summarized in the following table:
+The log loss for all three models is summarized in the following table:
 
 ```{r}
 log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
@@ -294,10 +305,9 @@ if(min==1){
   }
 ```
 
-
 ## LASSO Logistic Regression
 
-LASSO, or the Least Absolute Shrinkage and Selection Operator, is a method of maximum likelihood regression that introduces a penalty to the regression coefficients that is controlled by the parameter `lambda(`$\lambda$`)`. At $\lamda=0$, there is no penalty, and as the value of $\lambda$ increases, the penalty increases. This has the effect of shrinking the regression variables towards 0.
+LASSO, or the Least Absolute Shrinkage and Selection Operator, is a method of maximum likelihood regression that introduces a penalty to the regression coefficients that is controlled by the parameter `lambda(`$\lambda$`)`. At $\lambda=0$, there is no penalty, and as the value of $\lambda$ increases, the penalty increases. This has the effect of shrinking the regression variables towards 0.
 
 Both LASSO and ridge models employ this penalty, but one of the key differences between the two regression methods is that LASSO models can return coefficients of 0. As a result, LASSO is both a means of modeling as well as variable selection.
 
@@ -307,7 +317,7 @@ $\min\limits_{\beta_0, \beta} \frac{1}{N} w_i l(y_i , \beta_0 + \beta^T x_i ) +\
 
 for the provided values of $\alpha$ and $\lambda$.
 
-Source: https://glmnet.stanford.edu/articles/glmnet.html
+Source: <https://glmnet.stanford.edu/articles/glmnet.html>
 
 We use `method = "glmnet"` and `family="binomial"` as well as specifying tuning parameter `alpha=1` to employ LASSO methods in classification models. Because of the model's sensitivity to the scale of the parameters, the data is centered and standardized prior to model building.
 
@@ -372,7 +382,7 @@ Random forests are an extension to ensemble learning methods for decision tree a
 4.  Repeat a large number = $B$ times.
 5.  Average predictions (take majority vote) for each observation $i$ and calculate error.
 
-We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of $m$ from 1 to 5  $(\sqrt{21} = 4.58)$.
+We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of $m$ from 1 to 5 $(\sqrt{21} = 4.58)$.
 
 ```{r}
 rffit <- train(Diabetes ~ .,
@@ -415,7 +425,7 @@ knn_results
 
 ## Conditional Inference Tree
 
-Conditional inference trees are very similar in design to traditional decision trees built using `rpart` -- they recursive partitioning of the data to estimate a relationship between predictors and a response. Unlike decision trees, conditional inference trees use significance tests and p-values to determine splits in the data. The conditional inftrence tree algorithm follows these general steps:
+Conditional inference trees are very similar in design to traditional decision trees built using `rpart` -- they recursive partitioning of the data to estimate a relationship between predictors and a response. Unlike decision trees, conditional inference trees use significance tests and p-values to determine splits in the data. The conditional inference tree algorithm follows these general steps:
 
 1.  Test for independence between any of the input variables and the response. Stop if the null hypothesis ($H_0$: variable and response are independent) cannot be rejected for any variable. Otherwise, choose the variable with strongest correlation to the response.
 
@@ -442,13 +452,9 @@ ctreefit
 
 # Final Model Selection
 
-```{r}
-obs <- test_data |>
-  mutate(Diabetes = fct_recode(Diabetes, 
-                               "0" = "No_Diabetes",
-                               "1" = "Diabetes_or_Prediabetes")) |>
-  select(Diabetes)
+To determine the final model, we take the best six models from each model fit type above and use these to predict diabetes outcomes on the `test-data` set. The final model declared the winner is the one that minimizes log loss.
 
+```{r}
 logpreds <- predict(logfit, newdata = test_data)
 logprobs <- predict(logfit, newdata = test_data, type="prob")
 
@@ -466,6 +472,12 @@ knnprobs <- predict(knnfit, newdata = test_data, type = "prob")
 
 ctreepreds <- predict(ctreefit, newdata = test_data)
 ctreeprobs <- predict(ctreefit, newdata = test_data, type = "prob")
+
+obs <- test_data |>
+  mutate(Diabetes = fct_recode(Diabetes, 
+                               "0" = "No_Diabetes",
+                               "1" = "Diabetes_or_Prediabetes")) |>
+  select(Diabetes)
 
 test_results <-
 tibble("Model Type" = c("Logistic Regression",
@@ -525,4 +537,3 @@ if(best==1){
   }
 )
 ```
-
