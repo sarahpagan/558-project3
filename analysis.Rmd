@@ -110,6 +110,8 @@ edu_data
 
 # EDA
 
+Count of diabetes or prediabetes cases in the `r params$edu_level` subgroup.
+
 ```{r}
 ggplot(data = edu_data, aes(x = Diabetes)) +
   geom_bar(fill = c("darkorchid4", "mediumorchid1")) +
@@ -117,6 +119,8 @@ ggplot(data = edu_data, aes(x = Diabetes)) +
   labs(title = "Incidence of Diabetes",
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
+
+Proportion of individuals with **diabetes or prediabtes** with high blood pressure and/or high cholesterol:
 
 ```{r}
 edu_data |>
@@ -127,6 +131,19 @@ edu_data |>
   mutate(prop = round(n/sum(n), 2))
 ```
 
+Proportion of individuals with **no diabetes** with high blood pressure and/or high cholesterol:
+
+```{r}
+edu_data |>
+  filter(Diabetes == "No_Diabetes") |>
+  select(HighBP, HighChol) |>
+  count(HighBP, HighChol) |>
+  arrange(desc(n)) |>
+  mutate(prop = round(n/sum(n), 2))
+```
+
+Distribution of BMI:
+
 ```{r}
 ggplot(data = edu_data, aes(x = BMI)) +
   geom_density(aes(fill = Diabetes), alpha = 0.75) +
@@ -134,6 +151,8 @@ ggplot(data = edu_data, aes(x = BMI)) +
   labs(title = "BMI Distribution by Occurence of Diabetes",
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
+
+Count of individuals who performed physical activity (excluding work) in the last 30 days:
 
 ```{r}
 ggplot(edu_data, aes(x = PhysActivity)) +
@@ -145,12 +164,16 @@ ggplot(edu_data, aes(x = PhysActivity)) +
 past 30 days ")
 ```
 
+Occurence of diabetes by age:
+
 ```{r}
 edu_data |>
   filter(Diabetes == "Diabetes_or_Prediabetes") |>
   group_by(Age) |>
   summarise(n = n())
 ```
+
+Occurence of diabetes by income group:
 
 ```{r}
 ggplot(edu_data, aes(y = Income)) + 
@@ -161,12 +184,16 @@ ggplot(edu_data, aes(y = Income)) +
   xlab("Proportion")
 ```
 
+Count of individuals who eat fruits and/or veggies by occurrence of diabetes:
+
 ```{r}
 edu_data %>% 
   group_by(Fruits, Veggies, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
+
+Distribution of poor mental health days:
 
 ```{r}
 ggplot(data = edu_data, aes(x = MentHlth)) + 
@@ -177,6 +204,8 @@ ggplot(data = edu_data, aes(x = MentHlth)) +
   xlab("Reported Number of days of Poor Mental Health in last 30")
 ```
 
+Distribution of poor physical health days:
+
 ```{r}
 ggplot(data = edu_data, aes(x = PhysHlth)) + 
   geom_histogram(bins = 5, aes(fill = Diabetes)) + 
@@ -185,6 +214,8 @@ ggplot(data = edu_data, aes(x = PhysHlth)) +
        subtitle = paste0("Education Level: ", params$edu_level)) +
   xlab("Reported Number of days of Poor Physical Health in last 30")
 ```
+
+Proportion of diabetes by general health category:
 
 ```{r}
 ggplot(edu_data, aes(y = GenHlth)) + 
@@ -195,12 +226,16 @@ ggplot(edu_data, aes(y = GenHlth)) +
   xlab("Proportion") + ylab("General Health")
 ```
 
+Count of individuals who eat smoke and/or consume more than 14 alcoholic drinks per week (men) or more than 7 drinks per week (women) by occurrence of diabetes:
+
 ```{r}
 edu_data %>% 
   group_by(Smoker, HvyAlcoholConsump, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
+
+Count of individuals who have health care and/or could not see a doctor because of cost by diabetes occurrence:
 
 ```{r}
 edu_data %>% 
