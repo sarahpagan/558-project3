@@ -6,11 +6,11 @@ output:
       toc: TRUE
       toc_depth: 2
 params:
-  edu_level: "No School or Elementary"
+  edu_level: edu_level
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 library(readr)
 library(dplyr)
