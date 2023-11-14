@@ -23,6 +23,10 @@ The following is a list of packages we use for data processing, model building, 
 We apply the same analysis techniques across all five education level groups. To do this, we build one R Markdown document automated for the parameter `edu_level`. We use the following `render` function to generate the final reports:
 
 ```         
+library(purrr)
+library(rmarkdown)
+library(stringr)
+
 reports <- diabetes |> 
   distinct(Education) |>
   mutate(output_file = paste0(Education, ".md")) |>
@@ -32,19 +36,18 @@ reports <- diabetes |>
   select(-Education)
 
 pwalk(reports, render, input = "analysis.Rmd")
+
 ```
 
 ## Analysis
 
 Final reports for each education level are linked below: 
 
-**TO DO: add links**
-
 1. No School or Elementary 
 2. Some High School
 3. High School Graduate
 4. Some College or Technical School
-5. College Graduate
+5. [College Graduate](College_Graduate.html)
 
 
 
