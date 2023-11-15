@@ -11,6 +11,3 @@ reports <- diabetes |>
   select(-Education)
 
 pwalk(reports, render, input = "analysis.Rmd")
-
-
-

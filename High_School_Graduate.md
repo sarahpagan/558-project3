@@ -35,8 +35,8 @@ This includes data on:
 - General Data, such as Sex, Age, Education level and Income
 
 Our task is to perform separate analyses for each level of `Education`
-in the data set. This document contains analysis for the No School or
-Elementary group.
+in the data set. This document contains analysis for the High School
+Graduate group.
 
 Prior to fitting models to predict the presence of diabetes, the data
 must be read in, processed, and exploratory data analysis (EDA) should
@@ -126,36 +126,38 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
   select(Diabetes, everything())
 ```
 
-Next, we filter the data for the education level: No School or
-Elementary. Here’s the final data frame:
+Next, we filter the data for the education level: High School Graduate.
+Here’s the final data frame:
 
 ``` r
 edu_data <- filter(diabetes, Education == params$edu_level)
 edu_data
 ```
 
-    ## # A tibble: 4,217 × 22
-    ##    Diabetes            HighBP HighChol CholCheck   BMI Smoker Stroke HeartDiseaseorAttack
-    ##    <fct>               <fct>  <fct>    <fct>     <dbl> <fct>  <fct>  <fct>               
-    ##  1 No_Diabetes         High … High Ch… Chol Che…    38 Yes    No     No                  
-    ##  2 Diabetes_or_Predia… High … High Ch… Chol Che…    28 Yes    No     Yes                 
-    ##  3 Diabetes_or_Predia… No Hi… High Ch… Chol Che…    32 No     No     Yes                 
-    ##  4 Diabetes_or_Predia… High … High Ch… Chol Che…    25 Yes    No     Yes                 
-    ##  5 No_Diabetes         High … No High… Chol Che…    35 Yes    No     No                  
-    ##  6 No_Diabetes         High … High Ch… Chol Che…    45 Yes    No     Yes                 
-    ##  7 Diabetes_or_Predia… High … High Ch… Chol Che…    25 Yes    No     No                  
-    ##  8 No_Diabetes         High … High Ch… Chol Che…    37 Yes    No     No                  
-    ##  9 Diabetes_or_Predia… High … No High… Chol Che…    30 No     No     No                  
-    ## 10 No_Diabetes         No Hi… High Ch… Chol Che…    36 No     No     No                  
-    ## # ℹ 4,207 more rows
-    ## # ℹ 14 more variables: PhysActivity <fct>, Fruits <fct>, Veggies <fct>,
-    ## #   HvyAlcoholConsump <fct>, AnyHealthcare <fct>, NoDocbcCost <fct>, GenHlth <fct>,
-    ## #   MentHlth <dbl>, PhysHlth <dbl>, DiffWalk <fct>, Sex <fct>, Age <fct>,
+    ## # A tibble: 62,750 × 22
+    ##    Diabetes     HighBP HighChol CholCheck   BMI Smoker Stroke
+    ##    <fct>        <fct>  <fct>    <fct>     <dbl> <fct>  <fct> 
+    ##  1 No_Diabetes  High … High Ch… Chol Che…    40 Yes    No    
+    ##  2 No_Diabetes  High … High Ch… Chol Che…    28 No     No    
+    ##  3 No_Diabetes  High … High Ch… Chol Che…    25 Yes    No    
+    ##  4 No_Diabetes  No Hi… No High… Chol Che…    24 No     No    
+    ##  5 Diabetes_or… High … High Ch… Chol Che…    28 No     No    
+    ##  6 No_Diabetes  High … High Ch… Chol Che…    21 No     No    
+    ##  7 No_Diabetes  High … High Ch… Chol Che…    22 No     Yes   
+    ##  8 No_Diabetes  High … High Ch… Chol Che…    28 Yes    No    
+    ##  9 Diabetes_or… High … High Ch… Chol Che…    27 Yes    No    
+    ## 10 No_Diabetes  No Hi… No High… Chol Che…    23 No     No    
+    ## # ℹ 62,740 more rows
+    ## # ℹ 15 more variables: HeartDiseaseorAttack <fct>,
+    ## #   PhysActivity <fct>, Fruits <fct>, Veggies <fct>,
+    ## #   HvyAlcoholConsump <fct>, AnyHealthcare <fct>,
+    ## #   NoDocbcCost <fct>, GenHlth <fct>, MentHlth <dbl>,
+    ## #   PhysHlth <dbl>, DiffWalk <fct>, Sex <fct>, Age <fct>,
     ## #   Education <fct>, Income <fct>
 
 # EDA
 
-Count of diabetes or prediabetes cases in the No School or Elementary
+Count of diabetes or prediabetes cases in the High School Graduate
 subgroup.
 
 ``` r
@@ -166,7 +168,7 @@ ggplot(data = edu_data, aes(x = Diabetes)) +
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 Proportion of individuals with **diabetes or prediabtes** with high
 blood pressure and/or high cholesterol:
@@ -183,10 +185,10 @@ edu_data |>
     ## # A tibble: 4 × 4
     ##   HighBP     HighChol         n  prop
     ##   <fct>      <fct>        <int> <dbl>
-    ## 1 High BP    High Chol      735  0.6 
-    ## 2 High BP    No High Chol   227  0.18
-    ## 3 No High BP High Chol      141  0.11
-    ## 4 No High BP No High Chol   127  0.1
+    ## 1 High BP    High Chol     6197  0.56
+    ## 2 High BP    No High Chol  2292  0.21
+    ## 3 No High BP No High Chol  1328  0.12
+    ## 4 No High BP High Chol     1249  0.11
 
 Proportion of individuals with **no diabetes** with high blood pressure
 and/or high cholesterol:
@@ -203,10 +205,10 @@ edu_data |>
     ## # A tibble: 4 × 4
     ##   HighBP     HighChol         n  prop
     ##   <fct>      <fct>        <int> <dbl>
-    ## 1 No High BP No High Chol  1008  0.34
-    ## 2 High BP    High Chol      912  0.31
-    ## 3 High BP    No High Chol   603  0.2 
-    ## 4 No High BP High Chol      464  0.16
+    ## 1 No High BP No High Chol 20184  0.39
+    ## 2 High BP    High Chol    13246  0.26
+    ## 3 High BP    No High Chol  9985  0.19
+    ## 4 No High BP High Chol     8269  0.16
 
 Distribution of BMI:
 
@@ -218,7 +220,7 @@ ggplot(data = edu_data, aes(x = BMI)) +
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Count of individuals who performed physical activity (excluding work) in
 the last 30 days:
@@ -233,7 +235,7 @@ ggplot(edu_data, aes(x = PhysActivity)) +
 past 30 days ")
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 Occurrence of diabetes by age:
 
@@ -247,19 +249,19 @@ edu_data |>
     ## # A tibble: 13 × 2
     ##    Age             n
     ##    <fct>       <int>
-    ##  1 18 to 24        1
-    ##  2 25 to 29        4
-    ##  3 30 to 34        9
-    ##  4 35 to 39       14
-    ##  5 40 to 45       21
-    ##  6 45 to 49       64
-    ##  7 50 to 54       85
-    ##  8 55 to 59      128
-    ##  9 60 to 64      163
-    ## 10 65 to 69      203
-    ## 11 70 to 74      193
-    ## 12 75 to 79      161
-    ## 13 80 or Older   184
+    ##  1 18 to 24       33
+    ##  2 25 to 29       36
+    ##  3 30 to 34       86
+    ##  4 35 to 39      175
+    ##  5 40 to 45      278
+    ##  6 45 to 49      562
+    ##  7 50 to 54      985
+    ##  8 55 to 59     1407
+    ##  9 60 to 64     1702
+    ## 10 65 to 69     1886
+    ## 11 70 to 74     1613
+    ## 12 75 to 79     1175
+    ## 13 80 or Older  1128
 
 Occurrence of diabetes by income group:
 
@@ -272,7 +274,7 @@ ggplot(edu_data, aes(y = Income)) +
   xlab("Proportion")
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Count of individuals who eat fruits and/or veggies by occurrence of
 diabetes:
@@ -288,10 +290,10 @@ edu_data %>%
     ## # Groups:   Fruits, Veggies [4]
     ##   Fruits Veggies No_Diabetes Diabetes_or_Prediabetes
     ##   <fct>  <fct>         <int>                   <int>
-    ## 1 No     No              565                     253
-    ## 2 No     Yes             682                     285
-    ## 3 Yes    No              324                     153
-    ## 4 Yes    Yes            1416                     539
+    ## 1 No     No             8419                    2028
+    ## 2 No     Yes           13600                    2964
+    ## 3 Yes    No             4761                    1270
+    ## 4 Yes    Yes           24904                    4804
 
 Distribution of poor mental health days:
 
@@ -304,7 +306,7 @@ ggplot(data = edu_data, aes(x = MentHlth)) +
   xlab("Reported Number of days of Poor Mental Health in last 30")
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 Distribution of poor physical health days:
 
@@ -317,7 +319,7 @@ ggplot(data = edu_data, aes(x = PhysHlth)) +
   xlab("Reported Number of days of Poor Physical Health in last 30")
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Proportion of diabetes by general health category:
 
@@ -330,7 +332,7 @@ ggplot(edu_data, aes(y = GenHlth)) +
   xlab("Proportion") + ylab("General Health")
 ```
 
-![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](High_School_Graduate_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 Count of individuals who eat smoke and/or consume more than 14 alcoholic
 drinks per week (men) or more than 7 drinks per week (women) by
@@ -345,12 +347,13 @@ edu_data %>%
 
     ## # A tibble: 4 × 4
     ## # Groups:   Smoker, HvyAlcoholConsump [4]
-    ##   Smoker HvyAlcoholConsump No_Diabetes Diabetes_or_Prediabetes
-    ##   <fct>  <fct>                   <int>                   <int>
-    ## 1 No     No                       1553                     612
-    ## 2 No     Yes                        22                       4
-    ## 3 Yes    No                       1335                     605
-    ## 4 Yes    Yes                        77                       9
+    ##   Smoker HvyAlcoholConsump No_Diabetes Diabetes_or_Prediabe…¹
+    ##   <fct>  <fct>                   <int>                  <int>
+    ## 1 No     No                      23663                   4928
+    ## 2 No     Yes                       772                     64
+    ## 3 Yes    No                      24956                   5892
+    ## 4 Yes    Yes                      2293                    182
+    ## # ℹ abbreviated name: ¹​Diabetes_or_Prediabetes
 
 Count of individuals who have health care and/or could not see a doctor
 because of cost by diabetes occurrence:
@@ -364,12 +367,13 @@ edu_data %>%
 
     ## # A tibble: 4 × 4
     ## # Groups:   AnyHealthcare, NoDocbcCost [4]
-    ##   AnyHealthcare NoDocbcCost No_Diabetes Diabetes_or_Prediabetes
-    ##   <fct>         <fct>             <int>                   <int>
-    ## 1 No            No                  327                      71
-    ## 2 No            Yes                 219                      55
-    ## 3 Yes           No                 2126                     939
-    ## 4 Yes           Yes                 315                     165
+    ##   AnyHealthcare NoDocbcCost No_Diabetes
+    ##   <fct>         <fct>             <int>
+    ## 1 No            No                 2400
+    ## 2 No            Yes                1311
+    ## 3 Yes           No                44195
+    ## 4 Yes           Yes                3778
+    ## # ℹ 1 more variable: Diabetes_or_Prediabetes <int>
 
 # Modeling
 
@@ -461,11 +465,11 @@ log_results
 ```
 
     ## # A tibble: 3 × 2
-    ##   Model                                                   logLoss
-    ##   <chr>                                                     <dbl>
-    ## 1 Age + HighChol + HighBP + BMI                             0.536
-    ## 2 Sex + GenHlth + PhysHlth + MentHlth                       0.568
-    ## 3 Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump   0.570
+    ##   Model                                               logLoss
+    ##   <chr>                                                 <dbl>
+    ## 1 Age + HighChol + HighBP + BMI                         0.407
+    ## 2 Sex + GenHlth + PhysHlth + MentHlth                   0.429
+    ## 3 Age + Income + HeartDiseaseorAttack + HvyAlcoholCo…   0.434
 
 ``` r
 min <- which.min(log_results$logLoss)
@@ -537,9 +541,9 @@ lasso_results
     ## # A tibble: 3 × 4
     ##   `Candidate Model` alpha lambda logLoss
     ##               <int> <dbl>  <dbl>   <dbl>
-    ## 1                 1     1    0     0.521
-    ## 2                 2     1    0.1   0.591
-    ## 3                 3     1    0.2   0.604
+    ## 1                 1     1    0     0.386
+    ## 2                 2     1    0.1   0.466
+    ## 3                 3     1    0.2   0.466
 
 ## Classification Tree
 
@@ -574,9 +578,9 @@ tree_results
     ## # A tibble: 3 × 3
     ##   `Candidate Model`      cp logLoss
     ##               <int>   <dbl>   <dbl>
-    ## 1                 1 0.00465   0.569
-    ## 2                 2 0.00581   0.562
-    ## 3                 3 0.0192    0.597
+    ## 1                 1 0.00207   0.424
+    ## 2                 2 0.00258   0.424
+    ## 3                 3 0.00529   0.458
 
 ## Random Forest
 
@@ -611,24 +615,24 @@ rffit
 
     ## Random Forest 
     ## 
-    ## 2952 samples
-    ##   21 predictor
-    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 43926 samples
+    ##    21 predictor
+    ##     2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 2362, 2362, 2361, 2361, 2362 
+    ## Summary of sample sizes: 35141, 35140, 35142, 35140, 35141 
     ## Resampling results across tuning parameters:
     ## 
     ##   mtry  logLoss  
-    ##   1     0.9631108
-    ##   2     0.5994679
-    ##   3     0.5343524
-    ##   4     0.5285476
-    ##   5     0.5285923
+    ##   1     2.9137960
+    ##   2     0.9722197
+    ##   3     0.5738145
+    ##   4     0.4661531
+    ##   5     0.4321616
     ## 
     ## logLoss was used to select the optimal model using the smallest value.
-    ## The final value used for the model was mtry = 4.
+    ## The final value used for the model was mtry = 5.
 
 ## Linear Discriminant Analysis
 
@@ -653,17 +657,17 @@ ldafit
 
     ## Linear Discriminant Analysis 
     ## 
-    ## 2952 samples
-    ##   20 predictor
-    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 43926 samples
+    ##    20 predictor
+    ##     2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 2361, 2362, 2362, 2361, 2362 
+    ## Summary of sample sizes: 35142, 35141, 35141, 35140, 35140 
     ## Resampling results:
     ## 
     ##   logLoss  
-    ##   0.5207557
+    ##   0.3896621
 
 ## Conditional Inference Tree
 
@@ -708,22 +712,22 @@ ctreefit
 
     ## Conditional Inference Tree 
     ## 
-    ## 2952 samples
-    ##   21 predictor
-    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 43926 samples
+    ##    21 predictor
+    ##     2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 2361, 2362, 2362, 2361, 2362 
+    ## Summary of sample sizes: 35141, 35141, 35142, 35140, 35140 
     ## Resampling results across tuning parameters:
     ## 
     ##   mincriterion  logLoss  
-    ##   0.90          0.5638362
-    ##   0.95          0.5627353
-    ##   0.99          0.5607621
+    ##   0.90          0.3971437
+    ##   0.95          0.3978288
+    ##   0.99          0.3985508
     ## 
     ## logLoss was used to select the optimal model using the smallest value.
-    ## The final value used for the model was mincriterion = 0.99.
+    ## The final value used for the model was mincriterion = 0.9.
 
 # Final Model Selection
 
@@ -793,12 +797,12 @@ test_results
     ## # A tibble: 6 × 3
     ##   `Model Type`                 Accuracy logLoss
     ##   <chr>                           <dbl>   <dbl>
-    ## 1 Logistic Regression             0.725   0.552
-    ## 2 LASSO Regression                0.731   0.514
-    ## 3 Classificaton Tree              0.712   0.572
-    ## 4 Random Forest                   0.721   0.531
-    ## 5 Linear Discriminant Analysis    0.732   0.514
-    ## 6 Conditional Inference Tree      0.712   0.550
+    ## 1 Logistic Regression             0.825   0.406
+    ## 2 LASSO Regression                0.828   0.383
+    ## 3 Classificaton Tree              0.828   0.424
+    ## 4 Random Forest                   0.828   0.431
+    ## 5 Linear Discriminant Analysis    0.827   0.387
+    ## 6 Conditional Inference Tree      0.827   0.394
 
 ``` r
 best <- which.min(test_results$logLoss)

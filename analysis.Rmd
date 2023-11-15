@@ -1,5 +1,5 @@
 ---
-title: "Model Selection for Predicting Diabetes Outcomes"
+title: "Predicting Diabetes Outcomes"
 output: 
   github_document: 
       html_preview: false
@@ -516,14 +516,12 @@ tibble("Model Type" = c("Logistic Regression",
                         "LASSO Regression",
                         "Classificaton Tree",
                         "Random Forest",
-                        "K-Nearest Neighbors",
                         "Linear Discriminant Analysis",
                         "Conditional Inference Tree"),
        "Accuracy" = c(postResample(logpreds, test_data$Diabetes)[1],
                       postResample(lassopreds, test_data$Diabetes)[1],
                       postResample(treepreds, test_data$Diabetes)[1],
                       postResample(rfpreds, test_data$Diabetes)[1],
-                      postResample(knnpreds, test_data$Diabetes)[1],
                       postResample(ldapreds, test_data$Diabetes)[1],
                       postResample(ctreepreds, test_data$Diabetes)[1]),
        "logLoss" = c(logLoss(y = as.numeric(as.character(obs$Diabetes)),
@@ -535,11 +533,14 @@ tibble("Model Type" = c("Logistic Regression",
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = rfprobs[,2])[1],
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
-                             p = knnprobs[,2])[1],
-                     logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = ldaprobs[,2])[1],
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = ctreeprobs[,2])[1]))
+```
+
+Accuracy and log loss metrics for all six models:
+
+```{r}
 test_results
 ```
 
@@ -555,13 +556,8 @@ if(best == 1) {
 } else if(best == 4) {
   "Random Forest!"
 } else if(best == 5) {
-  "K-Nearest Neighbors!"
-} else if(best == 6) {
   "Linear Discriminant Analysis!"
-} else if(best == 7) {
-   "Conditional Inference Tree!"
-} else {
-  "Error!"
-}
-)
+} else if(best == 6) {
+  "Conditional Inference Tree!"
+})
 ```

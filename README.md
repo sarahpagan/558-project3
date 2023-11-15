@@ -2,11 +2,11 @@
 
 ## Introduction
 
-The goal of this R project is to build and compare models for predicting diabetes outcome using data from the CDC Behavioral Risk Factor Surveillance System (BRFSS) survey. We perform separate analyses for five distinct groups of individuals, subset by education level. The six types of models we consider are logistic regression, LASSO regression, decision tree, random forests, (5), and (6).
+The goal of this R project is to build and compare models for predicting diabetes outcome using data from the CDC Behavioral Risk Factor Surveillance System (BRFSS) survey. We perform separate analyses for five distinct groups of individuals, subset by education level. The six types of models we consider are logistic regression, LASSO regression, decision trees, random forests, linear discriminant analysis, and conditional inference trees.
 
 ## R Packages
 
-The following is a list of packages we use for data processing, model building, and generating output:
+The following is a list of packages we use for data processing and model building:
 
 1.  `readr`
 2.  `dplyr`
@@ -14,9 +14,7 @@ The following is a list of packages we use for data processing, model building, 
 4.  `tidyr`
 5.  `ggplot2`
 6.  `caret`
-7.  `stringr`
-8.  `rmarkdown`
-9.  `purrr`
+7.  `rfUtilities`
 
 ## Report Automation
 
@@ -44,9 +42,9 @@ pwalk(reports, render, input = "analysis.Rmd")
 Final reports for each education level are linked below: 
 
 1. [No School or Elementary](No_School_or_Elementary.html)
-2. Some High School
-3. High School Graduate
-4. Some College or Technical School
+2. [Some High School](Some_High_School.html)
+3. [High School Graduate](High_School_Graduate.html)
+4. [Some College or Technical School](Some_College_or_Technical_School.html)
 5. [College Graduate](College_Graduate.html)
 
 

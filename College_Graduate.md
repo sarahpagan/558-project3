@@ -1,4 +1,4 @@
-analysis
+Predicting Diabetes Outcomes
 ================
 
 - [Introduction](#introduction)
@@ -10,7 +10,6 @@ analysis
   - [LASSO Logistic Regression](#lasso-logistic-regression)
   - [Classification Tree](#classification-tree)
   - [Random Forest](#random-forest)
-  - [K-Nearest Neighbors](#k-nearest-neighbors)
   - [Linear Discriminant Analysis](#linear-discriminant-analysis)
   - [Conditional Inference Tree](#conditional-inference-tree)
 - [Final Model Selection](#final-model-selection)
@@ -59,21 +58,40 @@ We then add meaningful level names to each categorical predictor.
 ``` r
 diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
   mutate_at(vars(-BMI, -MentHlth, -PhysHlth), factor) |>
-  mutate(Diabetes = fct_recode(Diabetes_binary,"No_Diabetes" = "0", "Diabetes_or_Prediabetes" = "1"), .keep = "unused") |>
-  mutate(HighBP = fct_recode(HighBP, "No High BP" = "0", "High BP" = "1")) |>
-  mutate(HighChol = fct_recode(HighChol, "No High Chol" = "0", "High Chol" = "1")) |>
-  mutate(CholCheck = fct_recode(CholCheck, "No Chol Check" = "0", "Chol Check" = "1")) |>
+  mutate(Diabetes = fct_recode(Diabetes_binary,
+                               "No_Diabetes" = "0",
+                               "Diabetes_or_Prediabetes" = "1"),
+         .keep = "unused") |>
+  mutate(HighBP = fct_recode(HighBP, "No High BP" = "0",
+                             "High BP" = "1")) |>
+  mutate(HighChol = fct_recode(HighChol, "No High Chol" = "0",
+                               "High Chol" = "1")) |>
+  mutate(CholCheck = fct_recode(CholCheck, "No Chol Check" = "0",
+                                "Chol Check" = "1")) |>
   mutate(Smoker = fct_recode(Smoker, "No" = "0", "Yes" = "1")) |>
   mutate(Stroke = fct_recode(Stroke, "No" = "0", "Yes" = "1")) |>
-  mutate(HeartDiseaseorAttack = fct_recode(HeartDiseaseorAttack, "No" = "0", "Yes" = "1")) |>
-  mutate(PhysActivity = fct_recode(PhysActivity, "No" = "0", "Yes" = "1")) |>
+  mutate(HeartDiseaseorAttack = fct_recode(HeartDiseaseorAttack,
+                                           "No" = "0",
+                                           "Yes" = "1")) |>
+  mutate(PhysActivity = fct_recode(PhysActivity,
+                                   "No" = "0",
+                                   "Yes" = "1")) |>
   mutate(Fruits = fct_recode(Fruits, "No" = "0", "Yes" = "1")) |>
   mutate(Veggies = fct_recode(Veggies, "No" = "0", "Yes" = "1")) |>
-  mutate(HvyAlcoholConsump = fct_recode(HvyAlcoholConsump, "No" = "0", "Yes" = "1")) |>
+  mutate(HvyAlcoholConsump = fct_recode(HvyAlcoholConsump,
+                                        "No" = "0",
+                                        "Yes" = "1")) |>
   mutate(AnyHealthcare = fct_recode(AnyHealthcare, "No" = "0", "Yes" = "1")) |>
   mutate(NoDocbcCost = fct_recode(NoDocbcCost, "No" = "0", "Yes" = "1")) |>
-  mutate(GenHlth = fct_recode(GenHlth, "Excellent" = "1", "Very Good" = "2", "Good" = "3", "Fair" = "4", "Poor" = "5")) |>
-  mutate(DiffWalk = fct_recode(DiffWalk, "No" = "0", "Yes" = "1")) |>
+  mutate(GenHlth = fct_recode(GenHlth,
+                              "Excellent" = "1",
+                              "Very Good" = "2",
+                              "Good" = "3",
+                              "Fair" = "4",
+                              "Poor" = "5")) |>
+  mutate(DiffWalk = fct_recode(DiffWalk,
+                               "No" = "0",
+                               "Yes" = "1")) |>
   mutate(Sex = fct_recode(Sex, "Female" = "0", "Male" = "1")) |>
   mutate(Age = fct_recode(Age,
                           "18 to 24" = "1",
@@ -109,7 +127,7 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
 ```
 
 Next, we filter the data for the education level: College Graduate.
-Here’s the final data frame.
+Here’s the final data frame:
 
 ``` r
 edu_data <- filter(diabetes, Education == params$edu_level)
@@ -117,22 +135,23 @@ edu_data
 ```
 
     ## # A tibble: 107,325 × 22
-    ##    Diabetes    HighBP HighChol CholCheck   BMI Smoker Stroke HeartDiseaseorAttack PhysActivity
-    ##    <fct>       <fct>  <fct>    <fct>     <dbl> <fct>  <fct>  <fct>                <fct>       
-    ##  1 No_Diabetes No Hi… No High… No Chol …    25 Yes    No     No                   Yes         
-    ##  2 No_Diabetes High … High Ch… Chol Che…    25 Yes    No     No                   Yes         
-    ##  3 No_Diabetes High … No High… Chol Che…    30 Yes    No     No                   No          
-    ##  4 Diabetes_o… No Hi… No High… Chol Che…    25 Yes    No     No                   Yes         
-    ##  5 No_Diabetes No Hi… High Ch… Chol Che…    33 Yes    Yes    No                   Yes         
-    ##  6 No_Diabetes High … No High… Chol Che…    33 No     No     No                   Yes         
-    ##  7 No_Diabetes No Hi… No High… No Chol …    23 No     No     No                   No          
-    ##  8 No_Diabetes No Hi… High Ch… Chol Che…    28 No     No     No                   No          
-    ##  9 No_Diabetes No Hi… No High… Chol Che…    32 No     No     No                   Yes         
-    ## 10 Diabetes_o… High … High Ch… Chol Che…    37 Yes    Yes    Yes                  No          
+    ##    Diabetes            HighBP HighChol CholCheck   BMI Smoker Stroke HeartDiseaseorAttack
+    ##    <fct>               <fct>  <fct>    <fct>     <dbl> <fct>  <fct>  <fct>               
+    ##  1 No_Diabetes         No Hi… No High… No Chol …    25 Yes    No     No                  
+    ##  2 No_Diabetes         High … High Ch… Chol Che…    25 Yes    No     No                  
+    ##  3 No_Diabetes         High … No High… Chol Che…    30 Yes    No     No                  
+    ##  4 Diabetes_or_Predia… No Hi… No High… Chol Che…    25 Yes    No     No                  
+    ##  5 No_Diabetes         No Hi… High Ch… Chol Che…    33 Yes    Yes    No                  
+    ##  6 No_Diabetes         High … No High… Chol Che…    33 No     No     No                  
+    ##  7 No_Diabetes         No Hi… No High… No Chol …    23 No     No     No                  
+    ##  8 No_Diabetes         No Hi… High Ch… Chol Che…    28 No     No     No                  
+    ##  9 No_Diabetes         No Hi… No High… Chol Che…    32 No     No     No                  
+    ## 10 Diabetes_or_Predia… High … High Ch… Chol Che…    37 Yes    Yes    Yes                 
     ## # ℹ 107,315 more rows
-    ## # ℹ 13 more variables: Fruits <fct>, Veggies <fct>, HvyAlcoholConsump <fct>,
-    ## #   AnyHealthcare <fct>, NoDocbcCost <fct>, GenHlth <fct>, MentHlth <dbl>, PhysHlth <dbl>,
-    ## #   DiffWalk <fct>, Sex <fct>, Age <fct>, Education <fct>, Income <fct>
+    ## # ℹ 14 more variables: PhysActivity <fct>, Fruits <fct>, Veggies <fct>,
+    ## #   HvyAlcoholConsump <fct>, AnyHealthcare <fct>, NoDocbcCost <fct>, GenHlth <fct>,
+    ## #   MentHlth <dbl>, PhysHlth <dbl>, DiffWalk <fct>, Sex <fct>, Age <fct>,
+    ## #   Education <fct>, Income <fct>
 
 # EDA
 
@@ -215,7 +234,7 @@ past 30 days ")
 
 ![](College_Graduate_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-Occurence of diabetes by age:
+Occurrence of diabetes by age:
 
 ``` r
 edu_data |>
@@ -241,7 +260,7 @@ edu_data |>
     ## 12 75 to 79      905
     ## 13 80 or Older   841
 
-Occurence of diabetes by income group:
+Occurrence of diabetes by income group:
 
 ``` r
 ggplot(edu_data, aes(y = Income)) + 
@@ -353,13 +372,16 @@ edu_data %>%
 
 # Modeling
 
-Before we start modeling the data, we split the data into a training and
-test set. We use `createDataPartition` to do so, using 70% of the data
-for training while reserving 30% of the data for testing.
+In our analysis, we employ six model types to predict diabetes outcomes.
+Prior to modeling, we split the data into a train set and a test set. We
+use `createDataPartition` to do so, employing 70% of the data for
+training while reserving 30% for testing.
 
 ``` r
 set.seed(10)
-index <- createDataPartition(edu_data |> pull(Diabetes), p = 0.7, list = FALSE)
+index <- createDataPartition(edu_data |> pull(Diabetes),
+                             p = 0.7,
+                             list = FALSE)
 train_data <- edu_data[index, ]
 test_data <- edu_data[-index, ]
 ```
@@ -369,13 +391,7 @@ test_data <- edu_data[-index, ]
 Log loss, or logarithmic loss, is an evaluation metric for
 classification models where the response is binary. It measures
 performance of a model, not the accuracy of a model. A lower value of
-log loss is indicative of better performance. Log loss is calculated by
-the following equation:
-
-$-\frac{1}{N}\sum_i y_i \times log(p(y_i)) + (1-y_i) \times log(1-p(y_i))$
-
-Where $y_i$ is the true outcome and $p(y_i)$ is the predicted
-probability of $y_i = 1$
+log loss is indicative of better performance.
 
 Log loss is the preferred evaluation metric over accuracy for
 classification modeling because it is more sensitive to the quality of
@@ -392,15 +408,9 @@ identify a “best” model.
 Logistic regression models are classification models estimating the
 probability of a binary event occurring given a set of predictors. The
 logistic regression function models an outcome as the log-odds of
-success:
-
-$log(\frac{P(success|x)}{1-P(sucess|x)}) = \beta_0 + \beta_1x_1$
-
-Therefore, the $\beta_1$ coefficient should be interpreted as the change
-in log-odds given a one-unit change in x. Taking the exponent of both
-sides in the above equation, it follows that:
-
-$P(success|x) = \frac{e^{\beta_0 + \beta_1x_1}}{1 + e^{\beta_0 + \beta_1x_1}}$
+success. Therefore, the regression coefficient should be interpreted as
+the change in log-odds given a one-unit change in x, holding all other
+variables constant.
 
 We use `method = "glm"` and `family = "binomial"` to train three
 candidate logistic regression models for predicting diabetes outcome.
@@ -479,22 +489,15 @@ if(min==1){
 
 LASSO, or the Least Absolute Shrinkage and Selection Operator, is a
 method of maximum likelihood regression that introduces a penalty to the
-regression coefficients that is controlled by the parameter
-`lambda(`$\lambda$`)`. At $\lambda=0$, there is no penalty, and as the
-value of $\lambda$ increases, the penalty increases. This has the effect
-of shrinking the regression variables towards 0.
+regression coefficients that is controlled by the parameter `lambda`. At
+`lambda = 0`, there is no penalty, and as the value of `lambda`
+increases, the penalty increases. This has the effect of shrinking the
+regression variables towards 0.
 
 Both LASSO and ridge models employ this penalty, but one of the key
 differences between the two regression methods is that LASSO models can
 return coefficients of 0. As a result, LASSO is both a means of modeling
 as well as variable selection.
-
-The general equation used for LASSO, ridge, and other elastic net
-regression models is
-
-$\min\limits_{\beta_0, \beta} \frac{1}{N} w_i l(y_i , \beta_0 + \beta^T x_i ) +\lambda[(1-\alpha)\|\beta\|^2_2 /2+\alpha\|\beta\|_1]$
-
-for the provided values of $\alpha$ and $\lambda$.
 
 Source: <https://glmnet.stanford.edu/articles/glmnet.html>
 
@@ -578,20 +581,19 @@ tree_results
 
 Random forests are an extension to ensemble learning methods for
 decision tree analysis. Unlike decision trees, however, random forests
-only consider a subset of total predictors, $m < p$. Random forest
+only consider a subset of total predictors, m \< p. Random forest
 algorithms follow the same process as bagging, with this key difference.
 The steps to building a random forest are:
 
-1.  Draw a bootstrap sample from the training data of sample size = $n$.
-2.  Randomly select a subset of predictors = $m$ and train a tree.
+1.  Draw a bootstrap sample from the training data of sample size = n.
+2.  Randomly select a subset of predictors = m and train a tree.
 3.  Call predictions for OOB observations.
-4.  Repeat a large number = $B$ times.
-5.  Average predictions (take majority vote) for each observation $i$
-    and calculate error.
+4.  Repeat a large number = B times.
+5.  Average predictions (take majority vote) for each observation i and
+    calculate error.
 
 We use `method = "rf"` to train random forest models for predicting
-diabetes outcome, considering values of $m$ from 1 to 5
-$(\sqrt{21} = 4.58)$.
+diabetes outcome, considering values of m from 1 to 5.
 
 ``` r
 rffit <- train(Diabetes ~ .,
@@ -627,47 +629,6 @@ rffit
     ## logLoss was used to select the optimal model using the smallest value.
     ## The final value used for the model was mtry = 5.
 
-## K-Nearest Neighbors
-
-K-Nearest Neighbors (KNN) is a classification model that considers the
-value of the surrounding points to predict the value of a target point.
-New entries are classified by looking at the value of the closest
-entries, and assigning the prevailing classification. The number of
-closest entries referenced is determined by the `k` parameter. Various
-formulas for distance can be used, depending on the type of data, but
-generally Euclidean distance is used for numeric data, and Hamming
-distance for categorical data.
-
-We use `method = "knn"` to train k-nearest neighbors models.
-
-``` r
-knnfit <- train(Diabetes ~ .,
-                  data = train_data,
-                  method = "knn",
-                  trControl = trainControl(method = "cv",
-                                         number = 5,
-                                         classProbs = TRUE,
-                                         summaryFunction=mnLogLoss),
-                  metric = "logLoss")
-```
-
-Candidate models are proposed, with their respective tuning parameters
-and log Loss.
-
-``` r
-knn_results <- tibble("Candidate Model" = seq(1, nrow(knnfit$results)),
-                      "k" = knnfit$results$k,
-                      "logLoss" = knnfit$results$logLoss)
-knn_results
-```
-
-    ## # A tibble: 3 × 3
-    ##   `Candidate Model`     k logLoss
-    ##               <int> <int>   <dbl>
-    ## 1                 1     5   0.959
-    ## 2                 2     7   0.767
-    ## 3                 3     9   0.640
-
 ## Linear Discriminant Analysis
 
 Linear Discriminant Analysis (LDA) aims to build a linear combination of
@@ -701,7 +662,7 @@ ldafit
     ## Resampling results:
     ## 
     ##   logLoss  
-    ##   0.2592053
+    ##   0.2593998
 
 ## Conditional Inference Tree
 
@@ -713,9 +674,9 @@ tests and p-values to determine splits in the data. The conditional
 inference tree algorithm follows these general steps:
 
 1.  Test for independence between any of the input variables and the
-    response. Stop if the null hypothesis ($H_0$: variable and response
-    are independent) cannot be rejected for any variable. Otherwise,
-    choose the variable with strongest correlation to the response.
+    response. Stop if the null hypothesis (H0: variable and response are
+    independent) cannot be rejected for any variable. Otherwise, choose
+    the variable with strongest correlation to the response.
 
 2.  Implement a binary split on the selected variable.
 
@@ -725,10 +686,10 @@ The developers of the algorithm aimed to correct for the traditional
 decision tree’s tendency of selection bias towards variables with many
 possible splits and overfitting. No predictor is included and no split
 is implemented unless the test exceeds the value given by
-`mincriterion`, $1 -$ p-value$(\alpha)$.
+`mincriterion = 1 - p-value`.
 
 To train the conditional inference tree, we use the `ctree` method and
-specify values of `mincriterion` = 0.90, 0.95, 0.99 ($\alpha$ = 0.1,
+specify values of `mincriterion` = 0.90, 0.95, 0.99 (p-value = 0.1,
 0.05, 0.01).
 
 ``` r
@@ -752,22 +713,22 @@ ctreefit
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 60103, 60102, 60102, 60102, 60103 
+    ## Summary of sample sizes: 60103, 60102, 60103, 60102, 60102 
     ## Resampling results across tuning parameters:
     ## 
     ##   mincriterion  logLoss  
-    ##   0.90          0.2561742
-    ##   0.95          0.2551946
-    ##   0.99          0.2557389
+    ##   0.90          0.2583497
+    ##   0.95          0.2573252
+    ##   0.99          0.2555596
     ## 
     ## logLoss was used to select the optimal model using the smallest value.
-    ## The final value used for the model was mincriterion = 0.95.
+    ## The final value used for the model was mincriterion = 0.99.
 
 # Final Model Selection
 
 To determine the final model, we take the best six models from each
 model fit type above and use these to predict diabetes outcomes on the
-`test-data` set. The final model declared the winner is the one that
+`test_data` set. The final model declared the winner is the one that
 minimizes log loss.
 
 ``` r
@@ -782,9 +743,6 @@ treeprobs <- predict(treefit, newdata = test_data, type = "prob")
 
 rfpreds <- predict(rffit, newdata = test_data)
 rfprobs <- predict(rffit, newdata = test_data, type = "prob")
-
-knnpreds <- predict(knnfit, newdata = test_data)
-knnprobs <- predict(knnfit, newdata = test_data, type = "prob")
 
 ldapreds <- predict(ldafit, newdata = test_data)
 ldaprobs <- predict(ldafit, newdata = test_data, type = "prob")
@@ -803,14 +761,12 @@ tibble("Model Type" = c("Logistic Regression",
                         "LASSO Regression",
                         "Classificaton Tree",
                         "Random Forest",
-                        "K-Nearest Neighbors",
                         "Linear Discriminant Analysis",
                         "Conditional Inference Tree"),
        "Accuracy" = c(postResample(logpreds, test_data$Diabetes)[1],
                       postResample(lassopreds, test_data$Diabetes)[1],
                       postResample(treepreds, test_data$Diabetes)[1],
                       postResample(rfpreds, test_data$Diabetes)[1],
-                      postResample(knnpreds, test_data$Diabetes)[1],
                       postResample(ldapreds, test_data$Diabetes)[1],
                       postResample(ctreepreds, test_data$Diabetes)[1]),
        "logLoss" = c(logLoss(y = as.numeric(as.character(obs$Diabetes)),
@@ -822,24 +778,26 @@ tibble("Model Type" = c("Logistic Regression",
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = rfprobs[,2])[1],
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
-                             p = knnprobs[,2])[1],
-                     logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = ldaprobs[,2])[1],
                      logLoss(y = as.numeric(as.character(obs$Diabetes)),
                              p = ctreeprobs[,2])[1]))
+```
+
+Accuracy and log loss metrics for all six models:
+
+``` r
 test_results
 ```
 
-    ## # A tibble: 7 × 3
+    ## # A tibble: 6 × 3
     ##   `Model Type`                 Accuracy logLoss
     ##   <chr>                           <dbl>   <dbl>
     ## 1 Logistic Regression             0.902   0.266
     ## 2 LASSO Regression                0.905   0.246
     ## 3 Classificaton Tree              0.904   0.279
     ## 4 Random Forest                   0.905   0.434
-    ## 5 K-Nearest Neighbors             0.901   0.653
-    ## 6 Linear Discriminant Analysis    0.898   0.260
-    ## 7 Conditional Inference Tree      0.904   0.260
+    ## 5 Linear Discriminant Analysis    0.898   0.260
+    ## 6 Conditional Inference Tree      0.904   0.260
 
 ``` r
 best <- which.min(test_results$logLoss)
@@ -853,15 +811,10 @@ if(best == 1) {
 } else if(best == 4) {
   "Random Forest!"
 } else if(best == 5) {
-  "K-Nearest Neighbors!"
-} else if(best == 6) {
   "Linear Discriminant Analysis!"
-} else if(best == 7) {
-   "Conditional Inference Tree!"
-} else {
-  "Error!"
-}
-)
+} else if(best == 6) {
+  "Conditional Inference Tree!"
+})
 ```
 
     ## [1] "The winner is LASSO Regression!"
