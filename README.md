@@ -1,8 +1,6 @@
-# ST 558 Project 3
-
 ## Introduction
 
-The goal of this R project is to build and compare models for predicting diabetes outcome using data from the CDC Behavioral Risk Factor Surveillance System (BRFSS) survey. We perform separate analyses for five distinct groups of individuals, subset by education level. The six types of models we consider are logistic regression, LASSO regression, decision trees, random forests, linear discriminant analysis, and conditional inference trees.
+The goal of this R project is to build and compare models for predicting diabetes outcomes using data from the CDC Behavioral Risk Factor Surveillance System (BRFSS) survey. We perform separate analyses for five distinct groups of individuals, subset by education level. The six types of models we consider are logistic regression, LASSO regression, decision trees, random forests, linear discriminant analysis, and conditional inference trees.
 
 ## R Packages
 
