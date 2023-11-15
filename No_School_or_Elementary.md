@@ -1,55 +1,61 @@
----
-title: "Model Selection for Predicting Diabetes Outcomes"
-output: 
-  github_document: 
-      html_preview: false
-      toc: TRUE
-      toc_depth: 2
-params:
-  edu_level: edu_level
----
+Model Selection for Predicting Diabetes Outcomes
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-
-library(readr)
-library(dplyr)
-library(forcats)
-library(ggplot2)
-library(caret)
-library(tidyr)
-library(rfUtilities)
-```
+- [Introduction](#introduction)
+- [Read in Data](#read-in-data)
+- [EDA](#eda)
+- [Modeling](#modeling)
+  - [Log Loss](#log-loss)
+  - [Logistic Regression](#logistic-regression)
+  - [LASSO Logistic Regression](#lasso-logistic-regression)
+  - [Classification Tree](#classification-tree)
+  - [Random Forest](#random-forest)
+  - [Linear Discriminant Analysis](#linear-discriminant-analysis)
+  - [Conditional Inference Tree](#conditional-inference-tree)
+- [Final Model Selection](#final-model-selection)
 
 # Introduction
 
-We are provided data from the Behavioral Risk Factor Surveillance System (BRFSS) from 2015. While the original data contains 330 columns, only columns relevant to diabetes research (22 columns) have been pulled. This includes data on:
+We are provided data from the Behavioral Risk Factor Surveillance System
+(BRFSS) from 2015. While the original data contains 330 columns, only
+columns relevant to diabetes research (22 columns) have been pulled.
+This includes data on:
 
--   Presence of High Blood Pressure
--   Presence of High Cholesterol, and whether it has been checked in the last 5 years
--   Body Mass Index
--   Whether the subject is a smoker
--   If the subject has had a stroke or has history of heart disease
--   Whether the subject is physically active
--   If the subjects' diet consists of regular fruits and vegetables
--   Whether the subject is a heavy drinker
--   Variables concerning health care coverage and access to doctors
--   Variables concerning general physical and mental health
--   General Data, such as Sex, Age, Education level and Income
+- Presence of High Blood Pressure
+- Presence of High Cholesterol, and whether it has been checked in the
+  last 5 years
+- Body Mass Index
+- Whether the subject is a smoker
+- If the subject has had a stroke or has history of heart disease
+- Whether the subject is physically active
+- If the subjects’ diet consists of regular fruits and vegetables
+- Whether the subject is a heavy drinker
+- Variables concerning health care coverage and access to doctors
+- Variables concerning general physical and mental health
+- General Data, such as Sex, Age, Education level and Income
 
-Our task is to perform separate analyses for each level of `Education` in the data set. This document contains analysis for the `r params$edu_level` group.
+Our task is to perform separate analyses for each level of `Education`
+in the data set. This document contains analysis for the No School or
+Elementary group.
 
-Prior to fitting models to predict the presence of diabetes, the data must be read in, processed, and exploratory data analysis (EDA) should be performed.
+Prior to fitting models to predict the presence of diabetes, the data
+must be read in, processed, and exploratory data analysis (EDA) should
+be performed.
 
-Processing involves resolving missing data and recoding certain variables into more easily used forms. EDA involves summarizing and visualizing data in order to identify trends and associations.
+Processing involves resolving missing data and recoding certain
+variables into more easily used forms. EDA involves summarizing and
+visualizing data in order to identify trends and associations.
 
-The end goal is to partition the data into training and testing datasets, and examine various methods of building classification models to determine which results in a model with highest efficacy.
+The end goal is to partition the data into training and testing
+datasets, and examine various methods of building classification models
+to determine which results in a model with highest efficacy.
 
 # Read in Data
 
-We first read in the data and convert many of the variables to factors. We then add meaningful level names to each categorical predictor.
+We first read in the data and convert many of the variables to factors.
+We then add meaningful level names to each categorical predictor.
 
-```{r}
+``` r
 diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
   mutate_at(vars(-BMI, -MentHlth, -PhysHlth), factor) |>
   mutate(Diabetes = fct_recode(Diabetes_binary,
@@ -120,18 +126,41 @@ diabetes <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv") |>
   select(Diabetes, everything())
 ```
 
-Next, we filter the data for the education level: `r params$edu_level`. Here's the final data frame:
+Next, we filter the data for the education level: No School or
+Elementary. Here’s the final data frame:
 
-```{r}
+``` r
 edu_data <- filter(diabetes, Education == params$edu_level)
 edu_data
 ```
 
+    ## # A tibble: 4,217 × 22
+    ##    Diabetes     HighBP HighChol CholCheck   BMI Smoker Stroke
+    ##    <fct>        <fct>  <fct>    <fct>     <dbl> <fct>  <fct> 
+    ##  1 No_Diabetes  High … High Ch… Chol Che…    38 Yes    No    
+    ##  2 Diabetes_or… High … High Ch… Chol Che…    28 Yes    No    
+    ##  3 Diabetes_or… No Hi… High Ch… Chol Che…    32 No     No    
+    ##  4 Diabetes_or… High … High Ch… Chol Che…    25 Yes    No    
+    ##  5 No_Diabetes  High … No High… Chol Che…    35 Yes    No    
+    ##  6 No_Diabetes  High … High Ch… Chol Che…    45 Yes    No    
+    ##  7 Diabetes_or… High … High Ch… Chol Che…    25 Yes    No    
+    ##  8 No_Diabetes  High … High Ch… Chol Che…    37 Yes    No    
+    ##  9 Diabetes_or… High … No High… Chol Che…    30 No     No    
+    ## 10 No_Diabetes  No Hi… High Ch… Chol Che…    36 No     No    
+    ## # ℹ 4,207 more rows
+    ## # ℹ 15 more variables: HeartDiseaseorAttack <fct>,
+    ## #   PhysActivity <fct>, Fruits <fct>, Veggies <fct>,
+    ## #   HvyAlcoholConsump <fct>, AnyHealthcare <fct>,
+    ## #   NoDocbcCost <fct>, GenHlth <fct>, MentHlth <dbl>,
+    ## #   PhysHlth <dbl>, DiffWalk <fct>, Sex <fct>, Age <fct>,
+    ## #   Education <fct>, Income <fct>
+
 # EDA
 
-Count of diabetes or prediabetes cases in the `r params$edu_level` subgroup.
+Count of diabetes or prediabetes cases in the No School or Elementary
+subgroup.
 
-```{r}
+``` r
 ggplot(data = edu_data, aes(x = Diabetes)) +
   geom_bar(fill = c("darkorchid4", "mediumorchid1")) +
   xlab(NULL) +
@@ -139,9 +168,12 @@ ggplot(data = edu_data, aes(x = Diabetes)) +
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
 
-Proportion of individuals with **diabetes or prediabtes** with high blood pressure and/or high cholesterol:
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-```{r}
+Proportion of individuals with **diabetes or prediabtes** with high
+blood pressure and/or high cholesterol:
+
+``` r
 edu_data |>
   filter(Diabetes == "Diabetes_or_Prediabetes") |>
   select(HighBP, HighChol) |>
@@ -150,9 +182,18 @@ edu_data |>
   mutate(prop = round(n/sum(n), 2))
 ```
 
-Proportion of individuals with **no diabetes** with high blood pressure and/or high cholesterol:
+    ## # A tibble: 4 × 4
+    ##   HighBP     HighChol         n  prop
+    ##   <fct>      <fct>        <int> <dbl>
+    ## 1 High BP    High Chol      735  0.6 
+    ## 2 High BP    No High Chol   227  0.18
+    ## 3 No High BP High Chol      141  0.11
+    ## 4 No High BP No High Chol   127  0.1
 
-```{r}
+Proportion of individuals with **no diabetes** with high blood pressure
+and/or high cholesterol:
+
+``` r
 edu_data |>
   filter(Diabetes == "No_Diabetes") |>
   select(HighBP, HighChol) |>
@@ -161,9 +202,17 @@ edu_data |>
   mutate(prop = round(n/sum(n), 2))
 ```
 
+    ## # A tibble: 4 × 4
+    ##   HighBP     HighChol         n  prop
+    ##   <fct>      <fct>        <int> <dbl>
+    ## 1 No High BP No High Chol  1008  0.34
+    ## 2 High BP    High Chol      912  0.31
+    ## 3 High BP    No High Chol   603  0.2 
+    ## 4 No High BP High Chol      464  0.16
+
 Distribution of BMI:
 
-```{r}
+``` r
 ggplot(data = edu_data, aes(x = BMI)) +
   geom_density(aes(fill = Diabetes), alpha = 0.75) +
   scale_fill_manual(values = c("darkorchid4", "mediumorchid1")) +
@@ -171,9 +220,12 @@ ggplot(data = edu_data, aes(x = BMI)) +
        subtitle = paste0("Education Level: ", params$edu_level))
 ```
 
-Count of individuals who performed physical activity (excluding work) in the last 30 days:
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-```{r}
+Count of individuals who performed physical activity (excluding work) in
+the last 30 days:
+
+``` r
 ggplot(edu_data, aes(x = PhysActivity)) +
   geom_bar(aes(fill = Diabetes)) +
   scale_fill_manual(values = c("darkorchid4", "mediumorchid1")) +
@@ -183,18 +235,37 @@ ggplot(edu_data, aes(x = PhysActivity)) +
 past 30 days ")
 ```
 
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
 Occurrence of diabetes by age:
 
-```{r}
+``` r
 edu_data |>
   filter(Diabetes == "Diabetes_or_Prediabetes") |>
   group_by(Age) |>
   summarise(n = n())
 ```
 
+    ## # A tibble: 13 × 2
+    ##    Age             n
+    ##    <fct>       <int>
+    ##  1 18 to 24        1
+    ##  2 25 to 29        4
+    ##  3 30 to 34        9
+    ##  4 35 to 39       14
+    ##  5 40 to 45       21
+    ##  6 45 to 49       64
+    ##  7 50 to 54       85
+    ##  8 55 to 59      128
+    ##  9 60 to 64      163
+    ## 10 65 to 69      203
+    ## 11 70 to 74      193
+    ## 12 75 to 79      161
+    ## 13 80 or Older   184
+
 Occurrence of diabetes by income group:
 
-```{r}
+``` r
 ggplot(edu_data, aes(y = Income)) + 
   geom_bar(aes(fill = Diabetes), position = "fill") + 
   scale_fill_manual(values = c("#FF5070", "#9070FF")) +
@@ -203,18 +274,30 @@ ggplot(edu_data, aes(y = Income)) +
   xlab("Proportion")
 ```
 
-Count of individuals who eat fruits and/or veggies by occurrence of diabetes:
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-```{r}
+Count of individuals who eat fruits and/or veggies by occurrence of
+diabetes:
+
+``` r
 edu_data %>% 
   group_by(Fruits, Veggies, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
 
+    ## # A tibble: 4 × 4
+    ## # Groups:   Fruits, Veggies [4]
+    ##   Fruits Veggies No_Diabetes Diabetes_or_Prediabetes
+    ##   <fct>  <fct>         <int>                   <int>
+    ## 1 No     No              565                     253
+    ## 2 No     Yes             682                     285
+    ## 3 Yes    No              324                     153
+    ## 4 Yes    Yes            1416                     539
+
 Distribution of poor mental health days:
 
-```{r}
+``` r
 ggplot(data = edu_data, aes(x = MentHlth)) + 
   geom_histogram(bins = 5, aes(fill = Diabetes)) + 
   scale_fill_manual(values = c("#FF5070", "#9070FF")) +
@@ -223,9 +306,11 @@ ggplot(data = edu_data, aes(x = MentHlth)) +
   xlab("Reported Number of days of Poor Mental Health in last 30")
 ```
 
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
 Distribution of poor physical health days:
 
-```{r}
+``` r
 ggplot(data = edu_data, aes(x = PhysHlth)) + 
   geom_histogram(bins = 5, aes(fill = Diabetes)) + 
   scale_fill_manual(values = c("#FF5070", "#9070FF")) +
@@ -234,9 +319,11 @@ ggplot(data = edu_data, aes(x = PhysHlth)) +
   xlab("Reported Number of days of Poor Physical Health in last 30")
 ```
 
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
 Proportion of diabetes by general health category:
 
-```{r}
+``` r
 ggplot(edu_data, aes(y = GenHlth)) + 
   geom_bar(aes(fill = Diabetes), position = "fill") + 
   scale_fill_manual(values = c("#FF5070", "#9070FF")) +
@@ -245,29 +332,57 @@ ggplot(edu_data, aes(y = GenHlth)) +
   xlab("Proportion") + ylab("General Health")
 ```
 
-Count of individuals who eat smoke and/or consume more than 14 alcoholic drinks per week (men) or more than 7 drinks per week (women) by occurrence of diabetes:
+![](No_School_or_Elementary_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-```{r}
+Count of individuals who eat smoke and/or consume more than 14 alcoholic
+drinks per week (men) or more than 7 drinks per week (women) by
+occurrence of diabetes:
+
+``` r
 edu_data %>% 
   group_by(Smoker, HvyAlcoholConsump, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
 
-Count of individuals who have health care and/or could not see a doctor because of cost by diabetes occurrence:
+    ## # A tibble: 4 × 4
+    ## # Groups:   Smoker, HvyAlcoholConsump [4]
+    ##   Smoker HvyAlcoholConsump No_Diabetes Diabetes_or_Prediabe…¹
+    ##   <fct>  <fct>                   <int>                  <int>
+    ## 1 No     No                       1553                    612
+    ## 2 No     Yes                        22                      4
+    ## 3 Yes    No                       1335                    605
+    ## 4 Yes    Yes                        77                      9
+    ## # ℹ abbreviated name: ¹​Diabetes_or_Prediabetes
 
-```{r}
+Count of individuals who have health care and/or could not see a doctor
+because of cost by diabetes occurrence:
+
+``` r
 edu_data %>% 
   group_by(AnyHealthcare, NoDocbcCost, Diabetes) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = Diabetes, values_from = n)
 ```
 
+    ## # A tibble: 4 × 4
+    ## # Groups:   AnyHealthcare, NoDocbcCost [4]
+    ##   AnyHealthcare NoDocbcCost No_Diabetes
+    ##   <fct>         <fct>             <int>
+    ## 1 No            No                  327
+    ## 2 No            Yes                 219
+    ## 3 Yes           No                 2126
+    ## 4 Yes           Yes                 315
+    ## # ℹ 1 more variable: Diabetes_or_Prediabetes <int>
+
 # Modeling
 
-In our analysis, we employ six model types to predict diabetes outcomes. Prior to modeling, we split the data into a train set and a test set. We use `createDataPartition` to do so, employing 70% of the data for training while reserving 30% for testing.
+In our analysis, we employ six model types to predict diabetes outcomes.
+Prior to modeling, we split the data into a train set and a test set. We
+use `createDataPartition` to do so, employing 70% of the data for
+training while reserving 30% for testing.
 
-```{r}
+``` r
 set.seed(10)
 index <- createDataPartition(edu_data |> pull(Diabetes),
                              p = 0.7,
@@ -278,19 +393,34 @@ test_data <- edu_data[-index, ]
 
 ## Log Loss
 
-Log loss, or logarithmic loss, is an evaluation metric for classification models where the response is binary. It measures performance of a model, not the accuracy of a model. A lower value of log loss is indicative of better performance.
+Log loss, or logarithmic loss, is an evaluation metric for
+classification models where the response is binary. It measures
+performance of a model, not the accuracy of a model. A lower value of
+log loss is indicative of better performance.
 
-Log loss is the preferred evaluation metric over accuracy for classification modeling because it is more sensitive to the quality of predictions, beyond whether the prediction was correct or incorrect. High probability, incorrect predictions will be more heavily penalized using a log loss metric. The goal is to develop a model with more accurate, calibrated predictions.
+Log loss is the preferred evaluation metric over accuracy for
+classification modeling because it is more sensitive to the quality of
+predictions, beyond whether the prediction was correct or incorrect.
+High probability, incorrect predictions will be more heavily penalized
+using a log loss metric. The goal is to develop a model with more
+accurate, calibrated predictions.
 
-For all methods of model building, we use the log loss metric to identify a "best" model.
+For all methods of model building, we use the log loss metric to
+identify a “best” model.
 
 ## Logistic Regression
 
-Logistic regression models are classification models estimating the probability of a binary event occurring given a set of predictors. The logistic regression function models an outcome as the log-odds of success. Therefore, the regression coefficient should be interpreted as the change in log-odds given a one-unit change in x, holding all other variables constant.
+Logistic regression models are classification models estimating the
+probability of a binary event occurring given a set of predictors. The
+logistic regression function models an outcome as the log-odds of
+success. Therefore, the regression coefficient should be interpreted as
+the change in log-odds given a one-unit change in x, holding all other
+variables constant.
 
-We use `method = "glm"` and `family = "binomial"` to train three candidate logistic regression models for predicting diabetes outcome.
+We use `method = "glm"` and `family = "binomial"` to train three
+candidate logistic regression models for predicting diabetes outcome.
 
-```{r}
+``` r
 logfit1 <- train(Diabetes ~ Age + HighChol + HighBP + BMI,
                  data = train_data,
                  method = "glm",
@@ -324,7 +454,7 @@ logfit3 <- train(Diabetes ~ Age + Income + HeartDiseaseorAttack + HvyAlcoholCons
 
 The log loss for all three models is summarized in the following table:
 
-```{r}
+``` r
 log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
                                   "Sex + GenHlth + PhysHlth + MentHlth",
                                   "Age + Income + HeartDiseaseorAttack + HvyAlcoholConsump"),
@@ -334,7 +464,14 @@ log_results <- tibble("Model" = c("Age + HighChol + HighBP + BMI",
 log_results
 ```
 
-```{r}
+    ## # A tibble: 3 × 2
+    ##   Model                                               logLoss
+    ##   <chr>                                                 <dbl>
+    ## 1 Age + HighChol + HighBP + BMI                         0.536
+    ## 2 Sex + GenHlth + PhysHlth + MentHlth                   0.568
+    ## 3 Age + Income + HeartDiseaseorAttack + HvyAlcoholCo…   0.570
+
+``` r
 min <- which.min(log_results$logLoss)
 
 if(min==1){
@@ -351,17 +488,31 @@ if(min==1){
   }
 ```
 
+    ## [1] "The best model is logfit1"
+
 ## LASSO Logistic Regression
 
-LASSO, or the Least Absolute Shrinkage and Selection Operator, is a method of maximum likelihood regression that introduces a penalty to the regression coefficients that is controlled by the parameter `lambda`. At `lambda = 0`, there is no penalty, and as the value of `lambda` increases, the penalty increases. This has the effect of shrinking the regression variables towards 0.
+LASSO, or the Least Absolute Shrinkage and Selection Operator, is a
+method of maximum likelihood regression that introduces a penalty to the
+regression coefficients that is controlled by the parameter `lambda`. At
+`lambda = 0`, there is no penalty, and as the value of `lambda`
+increases, the penalty increases. This has the effect of shrinking the
+regression variables towards 0.
 
-Both LASSO and ridge models employ this penalty, but one of the key differences between the two regression methods is that LASSO models can return coefficients of 0. As a result, LASSO is both a means of modeling as well as variable selection.
+Both LASSO and ridge models employ this penalty, but one of the key
+differences between the two regression methods is that LASSO models can
+return coefficients of 0. As a result, LASSO is both a means of modeling
+as well as variable selection.
 
 Source: <https://glmnet.stanford.edu/articles/glmnet.html>
 
-We use `method = "glmnet"` and `family="binomial"` as well as specifying tuning parameter `alpha=1` to employ LASSO methods in classification models. Because of the model's sensitivity to the scale of the parameters, the data is centered and standardized prior to model building.
+We use `method = "glmnet"` and `family="binomial"` as well as specifying
+tuning parameter `alpha=1` to employ LASSO methods in classification
+models. Because of the model’s sensitivity to the scale of the
+parameters, the data is centered and standardized prior to model
+building.
 
-```{r, warning=FALSE, message=FALSE, error=FALSE}
+``` r
 lassofit <- train(Diabetes ~ .,
                   data = train_data,
                   method = "glmnet",
@@ -376,9 +527,10 @@ lassofit <- train(Diabetes ~ .,
                   metric = "logLoss")
 ```
 
-Log loss for three best-performing candidate models, as well as tuning parameters of the models:
+Log loss for three best-performing candidate models, as well as tuning
+parameters of the models:
 
-```{r}
+``` r
 lasso_results <- tibble("Candidate Model" = seq(1, 3),
                         "alpha" = lassofit$results %>% arrange(logLoss) %>% pull(alpha) %>% head(3),
                         "lambda" = lassofit$results %>% arrange(logLoss) %>% pull(lambda) %>% head(3),
@@ -386,13 +538,24 @@ lasso_results <- tibble("Candidate Model" = seq(1, 3),
 lasso_results
 ```
 
+    ## # A tibble: 3 × 4
+    ##   `Candidate Model` alpha lambda logLoss
+    ##               <int> <dbl>  <dbl>   <dbl>
+    ## 1                 1     1    0     0.521
+    ## 2                 2     1    0.1   0.591
+    ## 3                 3     1    0.2   0.604
+
 ## Classification Tree
 
-Classification trees are classification models that attempt to predict the outcome by splitting the data into groups depending on the values of certain variables. Generally, this process would continue until any additional splits would add nothing to the model, but the number of splits can also be controlled using the complexity parameter `cp`.
+Classification trees are classification models that attempt to predict
+the outcome by splitting the data into groups depending on the values of
+certain variables. Generally, this process would continue until any
+additional splits would add nothing to the model, but the number of
+splits can also be controlled using the complexity parameter `cp`.
 
 We use `method = "rpart"` to build classification trees.
 
-```{r}
+``` r
 treefit <- train(Diabetes ~ .,
                   data = train_data,
                   method = "rpart",
@@ -405,26 +568,39 @@ treefit <- train(Diabetes ~ .,
 
 Summary of all candidate models, with tuning parameters and log loss:
 
-```{r}
+``` r
 tree_results <- tibble("Candidate Model" = seq(1, nrow(treefit$results)),
                       "cp" = treefit$results$cp,
                       "logLoss" = treefit$results$logLoss)
 tree_results
 ```
 
+    ## # A tibble: 3 × 3
+    ##   `Candidate Model`      cp logLoss
+    ##               <int>   <dbl>   <dbl>
+    ## 1                 1 0.00465   0.569
+    ## 2                 2 0.00581   0.562
+    ## 3                 3 0.0192    0.597
+
 ## Random Forest
 
-Random forests are an extension to ensemble learning methods for decision tree analysis. Unlike decision trees, however, random forests only consider a subset of total predictors, m \< p. Random forest algorithms follow the same process as bagging, with this key difference. The steps to building a random forest are:
+Random forests are an extension to ensemble learning methods for
+decision tree analysis. Unlike decision trees, however, random forests
+only consider a subset of total predictors, m \< p. Random forest
+algorithms follow the same process as bagging, with this key difference.
+The steps to building a random forest are:
 
 1.  Draw a bootstrap sample from the training data of sample size = n.
 2.  Randomly select a subset of predictors = m and train a tree.
 3.  Call predictions for OOB observations.
 4.  Repeat a large number = B times.
-5.  Average predictions (take majority vote) for each observation i and calculate error.
+5.  Average predictions (take majority vote) for each observation i and
+    calculate error.
 
-We use `method = "rf"` to train random forest models for predicting diabetes outcome, considering values of m from 1 to 5.
+We use `method = "rf"` to train random forest models for predicting
+diabetes outcome, considering values of m from 1 to 5.
 
-```{r}
+``` r
 rffit <- train(Diabetes ~ .,
                data = train_data,
                method = "rf",
@@ -437,13 +613,38 @@ rffit <- train(Diabetes ~ .,
 rffit
 ```
 
+    ## Random Forest 
+    ## 
+    ## 2952 samples
+    ##   21 predictor
+    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 2362, 2362, 2361, 2361, 2362 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mtry  logLoss  
+    ##   1     0.9631108
+    ##   2     0.5994679
+    ##   3     0.5343524
+    ##   4     0.5285476
+    ##   5     0.5285923
+    ## 
+    ## logLoss was used to select the optimal model using
+    ##  the smallest value.
+    ## The final value used for the model was mtry = 4.
+
 ## Linear Discriminant Analysis
 
-Linear Discriminant Analysis (LDA) aims to build a linear combination of predictors that partitions the data into separate classes, effectively dividing the data range into sections where all testing points within the same range would have the same classification.
+Linear Discriminant Analysis (LDA) aims to build a linear combination of
+predictors that partitions the data into separate classes, effectively
+dividing the data range into sections where all testing points within
+the same range would have the same classification.
 
 `method = lda` is used to train LDA models.
 
-```{r}
+``` r
 ldafit <- train(Diabetes ~ .,
                   data = train_data[,-21],
                   method = "lda",
@@ -455,21 +656,49 @@ ldafit <- train(Diabetes ~ .,
 ldafit
 ```
 
+    ## Linear Discriminant Analysis 
+    ## 
+    ## 2952 samples
+    ##   20 predictor
+    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 2361, 2362, 2362, 2361, 2362 
+    ## Resampling results:
+    ## 
+    ##   logLoss  
+    ##   0.5207557
+
 ## Conditional Inference Tree
 
-Conditional inference trees are very similar in design to traditional decision trees built using `rpart` -- they recursive partitioning of the data to estimate a relationship between predictors and a response. Unlike decision trees, conditional inference trees use significance tests and p-values to determine splits in the data. The conditional inference tree algorithm follows these general steps:
+Conditional inference trees are very similar in design to traditional
+decision trees built using `rpart` – they recursive partitioning of the
+data to estimate a relationship between predictors and a response.
+Unlike decision trees, conditional inference trees use significance
+tests and p-values to determine splits in the data. The conditional
+inference tree algorithm follows these general steps:
 
-1.  Test for independence between any of the input variables and the response. Stop if the null hypothesis (H0: variable and response are independent) cannot be rejected for any variable. Otherwise, choose the variable with strongest correlation to the response.
+1.  Test for independence between any of the input variables and the
+    response. Stop if the null hypothesis (H0: variable and response are
+    independent) cannot be rejected for any variable. Otherwise, choose
+    the variable with strongest correlation to the response.
 
 2.  Implement a binary split on the selected variable.
 
 3.  Recursively repeat steps one and two.
 
-The developers of the algorithm aimed to correct for the traditional decision tree's tendency of selection bias towards variables with many possible splits and overfitting. No predictor is included and no split is implemented unless the test exceeds the value given by `mincriterion = 1 - p-value`.
+The developers of the algorithm aimed to correct for the traditional
+decision tree’s tendency of selection bias towards variables with many
+possible splits and overfitting. No predictor is included and no split
+is implemented unless the test exceeds the value given by
+`mincriterion = 1 - p-value`.
 
-To train the conditional inference tree, we use the `ctree` method and specify values of `mincriterion` = 0.90, 0.95, 0.99 (p-value = 0.1, 0.05, 0.01).
+To train the conditional inference tree, we use the `ctree` method and
+specify values of `mincriterion` = 0.90, 0.95, 0.99 (p-value = 0.1,
+0.05, 0.01).
 
-```{r}
+``` r
 ctreefit <- train(Diabetes ~ .,
                   data = train_data,
                   method = "ctree",
@@ -482,11 +711,34 @@ ctreefit <- train(Diabetes ~ .,
 ctreefit
 ```
 
+    ## Conditional Inference Tree 
+    ## 
+    ## 2952 samples
+    ##   21 predictor
+    ##    2 classes: 'No_Diabetes', 'Diabetes_or_Prediabetes' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 2361, 2362, 2362, 2361, 2362 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mincriterion  logLoss  
+    ##   0.90          0.5638362
+    ##   0.95          0.5627353
+    ##   0.99          0.5607621
+    ## 
+    ## logLoss was used to select the optimal model using
+    ##  the smallest value.
+    ## The final value used for the model was mincriterion = 0.99.
+
 # Final Model Selection
 
-To determine the final model, we take the best six models from each model fit type above and use these to predict diabetes outcomes on the `test_data` set. The final model declared the winner is the one that minimizes log loss.
+To determine the final model, we take the best six models from each
+model fit type above and use these to predict diabetes outcomes on the
+`test_data` set. The final model declared the winner is the one that
+minimizes log loss.
 
-```{r}
+``` r
 logpreds <- predict(logfit, newdata = test_data)
 logprobs <- predict(logfit, newdata = test_data, type="prob")
 
@@ -543,7 +795,18 @@ tibble("Model Type" = c("Logistic Regression",
 test_results
 ```
 
-```{r}
+    ## # A tibble: 7 × 3
+    ##   `Model Type`                 Accuracy logLoss
+    ##   <chr>                           <dbl>   <dbl>
+    ## 1 Logistic Regression             0.725   0.552
+    ## 2 LASSO Regression                0.731   0.514
+    ## 3 Classificaton Tree              0.712   0.572
+    ## 4 Random Forest                   0.721   0.531
+    ## 5 K-Nearest Neighbors             0.703   0.842
+    ## 6 Linear Discriminant Analysis    0.732   0.514
+    ## 7 Conditional Inference Tree      0.712   0.550
+
+``` r
 best <- which.min(test_results$logLoss)
 paste("The winner is",
 if(best == 1) {
@@ -565,3 +828,5 @@ if(best == 1) {
 }
 )
 ```
+
+    ## [1] "The winner is LASSO Regression!"

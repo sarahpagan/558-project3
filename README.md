@@ -43,7 +43,7 @@ pwalk(reports, render, input = "analysis.Rmd")
 
 Final reports for each education level are linked below: 
 
-1. No School or Elementary 
+1. [No School or Elementary](No_School_or_Elementary.html)
 2. Some High School
 3. High School Graduate
 4. Some College or Technical School
